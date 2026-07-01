@@ -121,57 +121,59 @@ const handleEnterProject = (project: Project) => {
         </div>
       </template>
 
-      <el-row :gutter="20">
-        <el-col
-          v-for="project in filteredProjects"
-          :key="project.id"
-          :xs="24"
-          :sm="12"
-          :md="8"
-          :lg="6"
-        >
-          <el-card
-            shadow="hover"
-            class="project-card"
-            @click="handleEnterProject(project)"
-          >
-            <div class="project-icon">
-              <el-icon :size="48"><Folder /></el-icon>
-            </div>
-            <h3 class="project-name">{{ project.name }}</h3>
-            <p class="project-url">{{ project.url }}</p>
-            <div class="project-info">
-              <el-tag
-                :type="project.status === 'active' ? 'success' : 'info'"
-                size="small"
-              >
-                {{ project.status === "active" ? "活跃" : "已归档" }}
-              </el-tag>
-              <span class="cardkey-count">{{ project.cardKeyCount }} 卡密</span>
-            </div>
-            <div class="project-actions" @click.stop>
-              <el-button
-                v-if="userStore.hasPermission('project:edit')"
-                size="small"
-                type="primary"
-                link
-                @click="handleEdit(project, $event)"
-              >
-                编辑
-              </el-button>
-              <el-button
-                v-if="userStore.hasPermission('project:delete')"
-                size="small"
-                type="danger"
-                link
-                @click="handleDelete(project, $event)"
-              >
-                删除
-              </el-button>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
+      <el-table
+        :data="filteredProjects"
+        style="width: 100%"
+        @row-click="handleEnterProject"
+        class="project-table"
+      >
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="name" label="项目名称" min-width="150">
+          <template #default="{ row }">
+            <el-link type="primary">{{ row.name }}</el-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="url" label="项目URL" min-width="200">
+          <template #default="{ row }">
+            <span class="url-text">{{ row.url }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'active' ? 'success' : 'info'">
+              {{ row.status === "active" ? "活跃" : "已归档" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="cardKeyCount" label="卡密数量" width="100">
+          <template #default="{ row }">
+            <el-tag type="info">{{ row.cardKeyCount }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="创建日期" width="120" />
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              v-if="userStore.hasPermission('project:edit')"
+              size="small"
+              type="primary"
+              link
+              @click.stop="handleEdit(row, $event)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              v-if="userStore.hasPermission('project:delete')"
+              size="small"
+              type="danger"
+              link
+              @click.stop="handleDelete(row, $event)"
+            >
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
       <el-empty v-if="filteredProjects.length === 0" description="暂无项目" />
     </el-card>
@@ -200,13 +202,6 @@ const handleEnterProject = (project: Project) => {
   </div>
 </template>
 
-<script lang="ts">
-import { Folder } from "@element-plus/icons-vue";
-export default {
-  components: { Folder },
-};
-</script>
-
 <style scoped>
 .card-header {
   display: flex;
@@ -219,54 +214,20 @@ export default {
   gap: 12px;
 }
 
-.project-card {
+.project-table {
   cursor: pointer;
-  margin-bottom: 20px;
-  transition: transform 0.3s;
-  text-align: center;
 }
 
-.project-card:hover {
-  transform: translateY(-5px);
+.project-table :deep(.el-table__body tr) {
+  cursor: pointer;
 }
 
-.project-icon {
-  color: #409eff;
-  margin-bottom: 12px;
+.project-table :deep(.el-table__body tr:hover > td) {
+  background-color: #f5f7fa;
 }
 
-.project-name {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  color: #333;
-}
-
-.project-url {
-  font-size: 12px;
-  color: #999;
-  margin: 0 0 12px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.project-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.cardkey-count {
-  font-size: 12px;
+.url-text {
+  font-size: 13px;
   color: #666;
-}
-
-.project-actions {
-  border-top: 1px solid #eee;
-  padding-top: 12px;
-  display: flex;
-  justify-content: center;
-  gap: 16px;
 }
 </style>

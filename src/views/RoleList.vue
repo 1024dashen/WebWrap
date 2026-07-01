@@ -96,8 +96,8 @@ const handleRoleSubmit = () => {
 const handleConfigPermission = (role: Role) => {
   currentRole.value = role;
   selectedPermissions.value = [...role.permissions];
-  // Expand all by default
-  expandedMenus.value = new Set(menuPermissions.value.map((m) => m.id));
+  // Collapse all by default
+  expandedMenus.value = new Set();
   permDialogVisible.value = true;
 };
 
