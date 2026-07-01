@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { ElMessage } from "element-plus";
+import { ref, computed, reactive } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { mockRoles, mockPermissions } from "../mock";
 import type { Role, Permission } from "../types";
 
 const roles = ref<Role[]>([...mockRoles]);
 const allPermissions = ref<Permission[]>([...mockPermissions]);
 
-// Dialog state
-const dialogVisible = ref(false);
+// Permission dialog state
+const permDialogVisible = ref(false);
 const currentRole = ref<Role | null>(null);
 const selectedPermissions = ref<string[]>([]);
+
+// Role form dialog state
+const roleDialogVisible = ref(false);
+const roleDialogTitle = ref("新增角色");
+const editingRole = ref<Role | null>(null);
+const roleForm = reactive({
+  name: "",
+  description: "",
+});
 
 // Group permissions by menu
 const menuPermissions = computed(() => {
@@ -23,34 +32,75 @@ const getButtonPermissions = (menuId: string) => {
   );
 };
 
-// Open permission dialog
+// ===== Role CRUD =====
+const handleAddRole = () => {
+  editingRole.value = null;
+  roleForm.name = "";
+  roleForm.description = "";
+  roleDialogTitle.value = "新增角色";
+  roleDialogVisible.value = true;
+};
+
+const handleEditRole = (role: Role) => {
+  editingRole.value = role;
+  roleForm.name = role.name;
+  roleForm.description = role.description;
+  roleDialogTitle.value = "编辑角色";
+  roleDialogVisible.value = true;
+};
+
+const handleDeleteRole = (role: Role) => {
+  ElMessageBox.confirm(`确定要删除角色 "${role.name}" 吗？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  })
+    .then(() => {
+      roles.value = roles.value.filter((r) => r.id !== role.id);
+      ElMessage.success("删除成功");
+    })
+    .catch(() => {});
+};
+
+const handleRoleSubmit = () => {
+  if (!roleForm.name) {
+    ElMessage.warning("请填写角色名称");
+    return;
+  }
+
+  if (editingRole.value) {
+    // Update
+    const index = roles.value.findIndex((r) => r.id === editingRole.value!.id);
+    if (index !== -1) {
+      roles.value[index].name = roleForm.name;
+      roles.value[index].description = roleForm.description;
+    }
+    ElMessage.success("角色更新成功");
+  } else {
+    // Create
+    const newRole: Role = {
+      id: String(roles.value.length + 1),
+      name: roleForm.name,
+      description: roleForm.description,
+      permissions: [],
+    };
+    roles.value.push(newRole);
+    ElMessage.success("角色创建成功");
+  }
+  roleDialogVisible.value = false;
+};
+
+// ===== Permission Config =====
 const handleConfigPermission = (role: Role) => {
   currentRole.value = role;
   selectedPermissions.value = [...role.permissions];
-  dialogVisible.value = true;
-};
-
-// Check if a menu is fully checked (all buttons + itself)
-const isMenuFullyChecked = (menu: Permission) => {
-  if (!selectedPermissions.value.includes(menu.code)) return false;
-  const buttons = getButtonPermissions(menu.id);
-  return buttons.every((b) => selectedPermissions.value.includes(b.code));
-};
-
-// Check if a menu is partially checked
-const isMenuPartialChecked = (menu: Permission) => {
-  const buttons = getButtonPermissions(menu.id);
-  const checkedButtons = buttons.filter((b) =>
-    selectedPermissions.value.includes(b.code),
-  ).length;
-  return checkedButtons > 0 && checkedButtons < buttons.length;
+  permDialogVisible.value = true;
 };
 
 // Toggle menu permission (menu + all its buttons)
 const handleMenuChange = (menu: Permission, checked: boolean) => {
   const buttons = getButtonPermissions(menu.id);
   if (checked) {
-    // Add menu and all buttons
     if (!selectedPermissions.value.includes(menu.code)) {
       selectedPermissions.value.push(menu.code);
     }
@@ -60,7 +110,6 @@ const handleMenuChange = (menu: Permission, checked: boolean) => {
       }
     });
   } else {
-    // Remove menu and all buttons
     selectedPermissions.value = selectedPermissions.value.filter(
       (code) => code !== menu.code && !buttons.some((b) => b.code === code),
     );
@@ -77,7 +126,6 @@ const handleButtonChange = (
     if (!selectedPermissions.value.includes(code)) {
       selectedPermissions.value.push(code);
     }
-    // Auto-check parent menu
     if (!selectedPermissions.value.includes(menu.code)) {
       selectedPermissions.value.push(menu.code);
     }
@@ -85,7 +133,6 @@ const handleButtonChange = (
     selectedPermissions.value = selectedPermissions.value.filter(
       (c) => c !== code,
     );
-    // Auto-uncheck parent menu if no buttons checked
     const buttons = getButtonPermissions(menu.id);
     const hasChecked = buttons.some((b) =>
       selectedPermissions.value.includes(b.code),
@@ -99,14 +146,14 @@ const handleButtonChange = (
 };
 
 // Save permissions
-const handleSave = () => {
+const handleSavePermission = () => {
   if (!currentRole.value) return;
   const index = roles.value.findIndex((r) => r.id === currentRole.value!.id);
   if (index !== -1) {
     roles.value[index].permissions = [...selectedPermissions.value];
     ElMessage.success("权限配置已保存");
   }
-  dialogVisible.value = false;
+  permDialogVisible.value = false;
 };
 </script>
 
@@ -114,7 +161,10 @@ const handleSave = () => {
   <div class="role-list">
     <el-card>
       <template #header>
-        <span>角色管理</span>
+        <div class="card-header">
+          <span>角色管理</span>
+          <el-button type="primary" @click="handleAddRole">新增角色</el-button>
+        </div>
       </template>
 
       <el-table :data="roles" style="width: 100%">
@@ -126,7 +176,7 @@ const handleSave = () => {
             <el-tag type="info">{{ row.permissions.length }} 个权限</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150">
+        <el-table-column label="操作" width="220">
           <template #default="{ row }">
             <el-button
               size="small"
@@ -136,14 +186,55 @@ const handleSave = () => {
             >
               权限配置
             </el-button>
+            <el-button
+              size="small"
+              type="warning"
+              link
+              @click="handleEditRole(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              link
+              @click="handleDeleteRole(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
+    <!-- Role Form Dialog -->
+    <el-dialog
+      v-model="roleDialogVisible"
+      :title="roleDialogTitle"
+      width="500px"
+    >
+      <el-form :model="roleForm" label-width="80px">
+        <el-form-item label="角色名称">
+          <el-input v-model="roleForm.name" placeholder="请输入角色名称" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input
+            v-model="roleForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入角色描述"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleRoleSubmit">确定</el-button>
+      </template>
+    </el-dialog>
+
     <!-- Permission Config Dialog -->
     <el-dialog
-      v-model="dialogVisible"
+      v-model="permDialogVisible"
       :title="`权限配置 - ${currentRole?.name}`"
       width="600px"
     >
@@ -178,14 +269,20 @@ const handleSave = () => {
         </div>
       </div>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <el-button @click="permDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSavePermission">保存</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <style scoped>
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .permission-tree {
   max-height: 500px;
   overflow-y: auto;
