@@ -16,9 +16,6 @@ const userStore = useUserStore();
 
 const projectId = route.params.id as string;
 const project = computed(() => projectStore.getProjectById(projectId));
-const cardKeys = computed(
-  () => cardKeyStore.getCardKeysByProjectId(projectId).value,
-);
 
 const searchQuery = ref("");
 const filterStatus = ref("");
@@ -55,7 +52,7 @@ const statusOptions = [
 ];
 
 const filteredCardKeys = computed(() => {
-  let result = cardKeys.value;
+  let result = cardKeyStore.cardKeys;
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter((k) => k.key.toLowerCase().includes(query));
@@ -116,44 +113,63 @@ const handleDelete = (row: CardKey) => {
     cancelButtonText: "取消",
     type: "warning",
   })
-    .then(() => {
-      cardKeyStore.deleteCardKey(row.id);
-      ElMessage.success("删除成功");
+    .then(async () => {
+      try {
+        await cardKeyStore.deleteCardKey(row.id);
+        await cardKeyStore.fetchCardKeysByProjectId(projectId);
+        ElMessage.success("删除成功");
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
     })
     .catch(() => {});
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!form.key) {
     ElMessage.warning("请填写卡密");
     return;
   }
 
-  if (editingCardKey.value) {
-    cardKeyStore.updateCardKey(editingCardKey.value.id, {
-      key: form.key,
-      type: form.type,
-      status: form.status,
-      expireAt: form.expireAt || undefined,
-    });
-    ElMessage.success("更新成功");
-  } else {
-    cardKeyStore.addCardKey({
-      projectId,
-      key: form.key,
-      type: form.type,
-      status: form.status,
-      expireAt: form.expireAt || undefined,
-    });
-    ElMessage.success("添加成功");
+  try {
+    if (editingCardKey.value) {
+      await cardKeyStore.updateCardKey(editingCardKey.value.id, {
+        key: form.key,
+        type: form.type,
+        status: form.status,
+        expireAt: form.expireAt || undefined,
+      });
+      ElMessage.success("更新成功");
+    } else {
+      await cardKeyStore.addCardKey({
+        projectId,
+        key: form.key,
+        type: form.type,
+        status: form.status,
+        expireAt: form.expireAt || undefined,
+      });
+      ElMessage.success("添加成功");
+    }
+    dialogVisible.value = false;
+    await cardKeyStore.fetchCardKeysByProjectId(projectId);
+  } catch (error) {
+    ElMessage.error("操作失败");
   }
-  dialogVisible.value = false;
 };
 
-const handleBatchAdd = () => {
-  cardKeyStore.batchAddCardKeys(projectId, batchForm.type, batchForm.count);
-  ElMessage.success(`已生成 ${batchForm.count} 张卡密`);
-  batchDialogVisible.value = false;
+const handleBatchAdd = async () => {
+  try {
+    await cardKeyStore.batchAddCardKeys(
+      projectId,
+      batchForm.type,
+      batchForm.count,
+    );
+    ElMessage.success(`已生成 ${batchForm.count} 张卡密`);
+    batchDialogVisible.value = false;
+    await cardKeyStore.fetchCardKeysByProjectId(projectId);
+  } catch (error) {
+    ElMessage.error("生成失败");
+  }
 };
 
 const handleBack = () => {
@@ -164,6 +180,11 @@ const handleCopyKey = (key: string) => {
   navigator.clipboard.writeText(key);
   ElMessage.success("卡密已复制到剪贴板");
 };
+
+onMounted(() => {
+  projectStore.fetchProjects();
+  cardKeyStore.fetchCardKeysByProjectId(projectId);
+});
 </script>
 
 <template>

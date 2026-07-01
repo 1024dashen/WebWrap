@@ -28,16 +28,19 @@ const handleLogin = async () => {
     return;
   }
   loading.value = true;
-  setTimeout(() => {
-    const success = userStore.login(loginForm.email, loginForm.password);
+  try {
+    const success = await userStore.login(loginForm.email, loginForm.password);
     if (success) {
       ElMessage.success("登录成功");
       router.push("/dashboard");
     } else {
       ElMessage.error("登录失败，请检查邮箱和密码");
     }
+  } catch (error) {
+    ElMessage.error("登录失败，请检查邮箱和密码");
+  } finally {
     loading.value = false;
-  }, 500);
+  }
 };
 
 const handleRegister = async () => {
@@ -50,8 +53,8 @@ const handleRegister = async () => {
     return;
   }
   loading.value = true;
-  setTimeout(() => {
-    const success = userStore.register(
+  try {
+    const success = await userStore.register(
       registerForm.email,
       registerForm.username,
       registerForm.password,
@@ -60,9 +63,14 @@ const handleRegister = async () => {
       ElMessage.success("注册成功，请登录");
       isLogin.value = true;
       loginForm.email = registerForm.email;
+    } else {
+      ElMessage.error("注册失败");
     }
+  } catch (error) {
+    ElMessage.error("注册失败");
+  } finally {
     loading.value = false;
-  }, 500);
+  }
 };
 
 const toggleMode = () => {
@@ -171,7 +179,7 @@ const toggleMode = () => {
       <div class="demo-hint">
         <el-divider>演示账户</el-divider>
         <p>邮箱: admin@example.com</p>
-        <p>密码: 任意</p>
+        <p>密码: admin123</p>
       </div>
     </div>
   </div>

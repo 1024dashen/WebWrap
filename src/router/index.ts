@@ -60,8 +60,19 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
+  
+  // If token exists but permissions not loaded (e.g., page reload), fetch them
+  if (userStore.token && userStore.userPermissions.length === 0) {
+    try {
+      await userStore.fetchPermissions()
+    } catch (error) {
+      // If fetch fails, token might be invalid
+      userStore.logout()
+      return next('/login')
+    }
+  }
   
   if (to.meta.requiresAuth !== false && !userStore.isLoggedIn) {
     next('/login')

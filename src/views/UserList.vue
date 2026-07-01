@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "../stores/user";
-import { mockRoles } from "../mock";
+import api from "../utils/api";
 import type { User } from "../types";
 
 const userStore = useUserStore();
@@ -11,6 +11,7 @@ const searchQuery = ref("");
 const dialogVisible = ref(false);
 const dialogTitle = ref("新增用户");
 const editingUser = ref<User | null>(null);
+const roleOptions = ref<string[]>([]);
 
 const form = reactive({
   email: "",
@@ -31,7 +32,14 @@ const filteredUsers = computed(() => {
   );
 });
 
-const roleOptions = mockRoles.map((r) => r.name);
+const fetchRoles = async () => {
+  try {
+    const response = await api.get("/roles");
+    roleOptions.value = response.data.roles.map((r: any) => r.name);
+  } catch (error) {
+    console.error("Failed to fetch roles:", error);
+  }
+};
 
 const resetForm = () => {
   form.email = "";
@@ -65,48 +73,66 @@ const handleDelete = (row: User) => {
     cancelButtonText: "取消",
     type: "warning",
   })
-    .then(() => {
-      userStore.deleteUser(row.id);
-      ElMessage.success("删除成功");
+    .then(async () => {
+      try {
+        await userStore.deleteUser(row.id);
+        ElMessage.success("删除成功");
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
     })
     .catch(() => {});
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!form.email || !form.username || !form.role) {
     ElMessage.warning("请填写完整信息");
     return;
   }
 
-  if (editingUser.value) {
-    userStore.updateUser(editingUser.value.id, {
-      email: form.email,
-      username: form.username,
-      role: form.role,
-      status: form.status,
-    });
-    ElMessage.success("更新成功");
-  } else {
-    if (!form.password) {
-      ElMessage.warning("请输入密码");
-      return;
+  try {
+    if (editingUser.value) {
+      await userStore.updateUser(editingUser.value.id, {
+        email: form.email,
+        username: form.username,
+        role: form.role,
+        status: form.status,
+      });
+      ElMessage.success("更新成功");
+    } else {
+      if (!form.password) {
+        ElMessage.warning("请输入密码");
+        return;
+      }
+      await userStore.addUser({
+        email: form.email,
+        username: form.username,
+        role: form.role,
+        status: form.status,
+        password: form.password,
+      });
+      ElMessage.success("添加成功");
     }
-    userStore.addUser({
-      email: form.email,
-      username: form.username,
-      role: form.role,
-      status: form.status,
-    });
-    ElMessage.success("添加成功");
+    dialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error("操作失败");
   }
-  dialogVisible.value = false;
 };
 
-const handleToggleStatus = (row: User) => {
+const handleToggleStatus = async (row: User) => {
   const newStatus = row.status === "active" ? "disabled" : "active";
-  userStore.updateUser(row.id, { status: newStatus });
-  ElMessage.success(`已${newStatus === "active" ? "启用" : "禁用"}用户`);
+  try {
+    await userStore.updateUser(row.id, { status: newStatus });
+    ElMessage.success(`已${newStatus === "active" ? "启用" : "禁用"}用户`);
+  } catch (error) {
+    ElMessage.error("操作失败");
+  }
 };
+
+onMounted(() => {
+  userStore.fetchUsers();
+  fetchRoles();
+});
 </script>
 
 <template>

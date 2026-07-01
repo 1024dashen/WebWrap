@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useProjectStore } from "../stores/project";
@@ -61,40 +61,52 @@ const handleDelete = (row: Project, event: Event) => {
     cancelButtonText: "取消",
     type: "warning",
   })
-    .then(() => {
-      projectStore.deleteProject(row.id);
-      ElMessage.success("删除成功");
+    .then(async () => {
+      try {
+        await projectStore.deleteProject(row.id);
+        ElMessage.success("删除成功");
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
     })
     .catch(() => {});
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!form.name || !form.url) {
     ElMessage.warning("请填写完整信息");
     return;
   }
 
-  if (editingProject.value) {
-    projectStore.updateProject(editingProject.value.id, {
-      name: form.name,
-      url: form.url,
-      status: form.status,
-    });
-    ElMessage.success("更新成功");
-  } else {
-    projectStore.addProject({
-      name: form.name,
-      url: form.url,
-      status: form.status,
-    });
-    ElMessage.success("添加成功");
+  try {
+    if (editingProject.value) {
+      await projectStore.updateProject(editingProject.value.id, {
+        name: form.name,
+        url: form.url,
+        status: form.status,
+      });
+      ElMessage.success("更新成功");
+    } else {
+      await projectStore.addProject({
+        name: form.name,
+        url: form.url,
+        status: form.status,
+      });
+      ElMessage.success("添加成功");
+    }
+    dialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error("操作失败");
   }
-  dialogVisible.value = false;
 };
 
 const handleEnterProject = (project: Project) => {
   router.push(`/projects/${project.id}/cardkeys`);
 };
+
+onMounted(() => {
+  projectStore.fetchProjects();
+});
 </script>
 
 <template>

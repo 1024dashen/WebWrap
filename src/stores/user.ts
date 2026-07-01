@@ -1,75 +1,97 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User } from '../types'
-import { mockUsers, mockRoles } from '../mock'
+import api from '../utils/api'
 
 export const useUserStore = defineStore('user', () => {
   const currentUser = ref<User | null>(null)
   const token = ref<string>(localStorage.getItem('token') || '')
-  const users = ref<User[]>([...mockUsers])
+  const users = ref<User[]>([])
+  const userPermissions = ref<string[]>([])
 
   const isLoggedIn = computed(() => !!token.value)
-  
-  const userPermissions = computed(() => {
-    if (!currentUser.value) return []
-    const role = mockRoles.find(r => r.name === currentUser.value!.role)
-    return role?.permissions || []
-  })
 
-  const login = (email: string, _password: string) => {
-    const user = users.value.find(u => u.email === email)
-    if (user) {
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await api.post('/auth/login', { email, password })
+      const { token: newToken, user } = response.data
+      
       currentUser.value = user
-      token.value = 'mock-token-' + user.id
-      localStorage.setItem('token', token.value)
+      token.value = newToken
+      localStorage.setItem('token', newToken)
+      
+      // Fetch permissions
+      await fetchPermissions()
+      
       return true
+    } catch (error: any) {
+      return false
     }
-    if (email === 'admin@example.com') {
-      currentUser.value = users.value[0]
-      token.value = 'mock-token-1'
-      localStorage.setItem('token', token.value)
-      return true
-    }
-    return false
   }
 
-  const register = (email: string, username: string, _password: string) => {
-    const newUser: User = {
-      id: String(users.value.length + 1),
-      email,
-      username,
-      role: '运营人员',
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0]
+  const register = async (email: string, username: string, password: string): Promise<boolean> => {
+    try {
+      await api.post('/auth/register', { email, username, password })
+      return true
+    } catch (error: any) {
+      return false
     }
-    users.value.push(newUser)
-    return true
   }
 
   const logout = () => {
     currentUser.value = null
     token.value = ''
+    userPermissions.value = []
     localStorage.removeItem('token')
   }
 
-  const addUser = (user: Omit<User, 'id' | 'createdAt'>) => {
-    const newUser: User = {
-      ...user,
-      id: String(users.value.length + 1),
-      createdAt: new Date().toISOString().split('T')[0]
-    }
-    users.value.push(newUser)
-  }
-
-  const updateUser = (id: string, data: Partial<User>) => {
-    const index = users.value.findIndex(u => u.id === id)
-    if (index !== -1) {
-      users.value[index] = { ...users.value[index], ...data }
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users')
+      users.value = response.data.users
+    } catch (error) {
+      console.error('Failed to fetch users:', error)
     }
   }
 
-  const deleteUser = (id: string) => {
-    users.value = users.value.filter(u => u.id !== id)
+  const fetchPermissions = async () => {
+    try {
+      const response = await api.get('/auth/me')
+      userPermissions.value = response.data.permissions || []
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error)
+    }
+  }
+
+  const addUser = async (user: Omit<User, 'id' | 'createdAt'> & { password: string }) => {
+    try {
+      const response = await api.post('/users', user)
+      await fetchUsers()
+      return response.data
+    } catch (error) {
+      console.error('Failed to add user:', error)
+      throw error
+    }
+  }
+
+  const updateUser = async (id: string, data: Partial<User>) => {
+    try {
+      await api.put(`/users/${id}`, data)
+      await fetchUsers()
+    } catch (error) {
+      console.error('Failed to update user:', error)
+      throw error
+    }
+  }
+
+  const deleteUser = async (id: string) => {
+    try {
+      await api.delete(`/users/${id}`)
+      await fetchUsers()
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      throw error
+    }
   }
 
   const hasPermission = (code: string) => {
@@ -85,6 +107,8 @@ export const useUserStore = defineStore('user', () => {
     login,
     register,
     logout,
+    fetchUsers,
+    fetchPermissions,
     addUser,
     updateUser,
     deleteUser,

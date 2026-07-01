@@ -1,44 +1,64 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import type { CardKey } from '../types'
-import { mockCardKeys } from '../mock'
+import api from '../utils/api'
 
 export const useCardKeyStore = defineStore('cardkey', () => {
-  const cardKeys = ref<CardKey[]>([...mockCardKeys])
+  const cardKeys = ref<CardKey[]>([])
 
-  const getCardKeysByProjectId = (projectId: string) => {
-    return computed(() => cardKeys.value.filter(ck => ck.projectId === projectId))
-  }
-
-  const addCardKey = (cardKey: Omit<CardKey, 'id' | 'createdAt'>) => {
-    const newCardKey: CardKey = {
-      ...cardKey,
-      id: String(cardKeys.value.length + 1),
-      createdAt: new Date().toISOString().split('T')[0]
-    }
-    cardKeys.value.push(newCardKey)
-  }
-
-  const updateCardKey = (id: string, data: Partial<CardKey>) => {
-    const index = cardKeys.value.findIndex(ck => ck.id === id)
-    if (index !== -1) {
-      cardKeys.value[index] = { ...cardKeys.value[index], ...data }
+  const fetchCardKeys = async () => {
+    try {
+      const response = await api.get('/cardkeys')
+      cardKeys.value = response.data.cardKeys
+    } catch (error) {
+      console.error('Failed to fetch card keys:', error)
     }
   }
 
-  const deleteCardKey = (id: string) => {
-    cardKeys.value = cardKeys.value.filter(ck => ck.id !== id)
+  const fetchCardKeysByProjectId = async (projectId: string) => {
+    try {
+      const response = await api.get(`/cardkeys/project/${projectId}`)
+      cardKeys.value = response.data.cardKeys
+    } catch (error) {
+      console.error('Failed to fetch card keys:', error)
+    }
   }
 
-  const batchAddCardKeys = (projectId: string, type: CardKey['type'], count: number) => {
-    for (let i = 0; i < count; i++) {
-      const key = generateKey()
-      addCardKey({
-        projectId,
-        key,
-        type,
-        status: 'unused'
-      })
+  const addCardKey = async (cardKey: Omit<CardKey, 'id' | 'createdAt'>) => {
+    try {
+      const response = await api.post('/cardkeys', cardKey)
+      return response.data
+    } catch (error) {
+      console.error('Failed to add card key:', error)
+      throw error
+    }
+  }
+
+  const updateCardKey = async (id: string, data: Partial<CardKey>) => {
+    try {
+      await api.put(`/cardkeys/${id}`, data)
+    } catch (error) {
+      console.error('Failed to update card key:', error)
+      throw error
+    }
+  }
+
+  const deleteCardKey = async (id: string) => {
+    try {
+      await api.delete(`/cardkeys/${id}`)
+    } catch (error) {
+      console.error('Failed to delete card key:', error)
+      throw error
+    }
+  }
+
+  const batchAddCardKeys = async (projectId: string, type: CardKey['type'], count: number) => {
+    try {
+      const response = await api.post('/cardkeys/batch', { projectId, type, count })
+      return response.data
+    } catch (error) {
+      console.error('Failed to batch add card keys:', error)
+      throw error
     }
   }
 
@@ -59,7 +79,8 @@ export const useCardKeyStore = defineStore('cardkey', () => {
 
   return {
     cardKeys,
-    getCardKeysByProjectId,
+    fetchCardKeys,
+    fetchCardKeysByProjectId,
     addCardKey,
     updateCardKey,
     deleteCardKey,

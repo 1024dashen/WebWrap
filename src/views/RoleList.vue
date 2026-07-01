@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, reactive } from "vue";
+import { ref, computed, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { mockRoles, mockPermissions } from "../mock";
+import api from "../utils/api";
 import type { Role, Permission } from "../types";
 import { ArrowRight } from "@element-plus/icons-vue";
 
-const roles = ref<Role[]>([...mockRoles]);
-const allPermissions = ref<Permission[]>([...mockPermissions]);
+const roles = ref<Role[]>([]);
+const allPermissions = ref<Permission[]>([]);
 
 // Permission dialog state
 const permDialogVisible = ref(false);
@@ -34,6 +34,24 @@ const getButtonPermissions = (menuId: string) => {
   );
 };
 
+const fetchRoles = async () => {
+  try {
+    const response = await api.get("/roles");
+    roles.value = response.data.roles;
+  } catch (error) {
+    console.error("Failed to fetch roles:", error);
+  }
+};
+
+const fetchPermissions = async () => {
+  try {
+    const response = await api.get("/permissions");
+    allPermissions.value = response.data.permissions;
+  } catch (error) {
+    console.error("Failed to fetch permissions:", error);
+  }
+};
+
 // ===== Role CRUD =====
 const handleAddRole = () => {
   editingRole.value = null;
@@ -57,46 +75,50 @@ const handleDeleteRole = (role: Role) => {
     cancelButtonText: "取消",
     type: "warning",
   })
-    .then(() => {
-      roles.value = roles.value.filter((r) => r.id !== role.id);
-      ElMessage.success("删除成功");
+    .then(async () => {
+      try {
+        await api.delete(`/roles/${role.id}`);
+        await fetchRoles();
+        ElMessage.success("删除成功");
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
     })
     .catch(() => {});
 };
 
-const handleRoleSubmit = () => {
+const handleRoleSubmit = async () => {
   if (!roleForm.name) {
     ElMessage.warning("请填写角色名称");
     return;
   }
 
-  if (editingRole.value) {
-    // Update
-    const index = roles.value.findIndex((r) => r.id === editingRole.value!.id);
-    if (index !== -1) {
-      roles.value[index].name = roleForm.name;
-      roles.value[index].description = roleForm.description;
+  try {
+    if (editingRole.value) {
+      await api.put(`/roles/${editingRole.value.id}`, {
+        name: roleForm.name,
+        description: roleForm.description,
+      });
+      ElMessage.success("角色更新成功");
+    } else {
+      await api.post("/roles", {
+        name: roleForm.name,
+        description: roleForm.description,
+        permissions: [],
+      });
+      ElMessage.success("角色创建成功");
     }
-    ElMessage.success("角色更新成功");
-  } else {
-    // Create
-    const newRole: Role = {
-      id: String(roles.value.length + 1),
-      name: roleForm.name,
-      description: roleForm.description,
-      permissions: [],
-    };
-    roles.value.push(newRole);
-    ElMessage.success("角色创建成功");
+    await fetchRoles();
+    roleDialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error("操作失败");
   }
-  roleDialogVisible.value = false;
 };
 
 // ===== Permission Config =====
 const handleConfigPermission = (role: Role) => {
   currentRole.value = role;
   selectedPermissions.value = [...role.permissions];
-  // Collapse all by default
   expandedMenus.value = new Set();
   permDialogVisible.value = true;
 };
@@ -121,7 +143,6 @@ const collapseAll = () => {
   expandedMenus.value = new Set();
 };
 
-// Toggle menu permission (menu + all its buttons)
 const handleMenuChange = (menu: Permission, checked: boolean) => {
   const buttons = getButtonPermissions(menu.id);
   if (checked) {
@@ -140,7 +161,6 @@ const handleMenuChange = (menu: Permission, checked: boolean) => {
   }
 };
 
-// Toggle button permission
 const handleButtonChange = (
   menu: Permission,
   code: string,
@@ -169,16 +189,25 @@ const handleButtonChange = (
   }
 };
 
-// Save permissions
-const handleSavePermission = () => {
+const handleSavePermission = async () => {
   if (!currentRole.value) return;
-  const index = roles.value.findIndex((r) => r.id === currentRole.value!.id);
-  if (index !== -1) {
-    roles.value[index].permissions = [...selectedPermissions.value];
+
+  try {
+    await api.put(`/roles/${currentRole.value.id}`, {
+      permissions: selectedPermissions.value,
+    });
+    await fetchRoles();
     ElMessage.success("权限配置已保存");
+    permDialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error("保存失败");
   }
-  permDialogVisible.value = false;
 };
+
+onMounted(() => {
+  fetchRoles();
+  fetchPermissions();
+});
 </script>
 
 <template>

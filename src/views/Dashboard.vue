@@ -1,20 +1,32 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useUserStore } from "../stores/user";
-import { useProjectStore } from "../stores/project";
-import { useCardKeyStore } from "../stores/cardkey";
+import api from "../utils/api";
 
 const userStore = useUserStore();
-const projectStore = useProjectStore();
-const cardKeyStore = useCardKeyStore();
 
-const stats = computed(() => ({
-  totalUsers: userStore.users.length,
-  totalProjects: projectStore.projects.length,
-  totalCardKeys: cardKeyStore.cardKeys.length,
-  unusedCardKeys: cardKeyStore.cardKeys.filter((k) => k.status === "unused")
-    .length,
-}));
+const stats = ref({
+  totalUsers: 0,
+  totalProjects: 0,
+  totalCardKeys: 0,
+  unusedCardKeys: 0,
+});
+
+const recentProjects = ref<any[]>([]);
+
+const fetchDashboardData = async () => {
+  try {
+    const response = await api.get("/dashboard/stats");
+    stats.value = response.data.stats;
+    recentProjects.value = response.data.recentProjects || [];
+  } catch (error) {
+    console.error("Failed to fetch dashboard data:", error);
+  }
+};
+
+onMounted(() => {
+  fetchDashboardData();
+});
 </script>
 
 <template>
@@ -82,10 +94,7 @@ const stats = computed(() => ({
           <template #header>
             <span>最近项目</span>
           </template>
-          <el-table
-            :data="projectStore.projects.slice(0, 5)"
-            style="width: 100%"
-          >
+          <el-table :data="recentProjects.slice(0, 5)" style="width: 100%">
             <el-table-column prop="name" label="项目名称" />
             <el-table-column prop="cardKeyCount" label="卡密数量" width="100" />
             <el-table-column prop="status" label="状态" width="100">

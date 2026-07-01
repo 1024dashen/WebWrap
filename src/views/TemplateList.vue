@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useTemplateStore } from "../stores/template";
 import { useUserStore } from "../stores/user";
@@ -32,9 +32,13 @@ const handleDelete = (id: string, name: string) => {
     cancelButtonText: "取消",
     type: "warning",
   })
-    .then(() => {
-      templateStore.deleteTemplate(id);
-      ElMessage.success("删除成功");
+    .then(async () => {
+      try {
+        await templateStore.deleteTemplate(id);
+        ElMessage.success("删除成功");
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
     })
     .catch(() => {});
 };
@@ -53,7 +57,7 @@ const handleFileChange = (file: File) => {
   return false; // prevent auto upload
 };
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (!form.name) {
     ElMessage.warning("请填写模板名称");
     return;
@@ -63,13 +67,17 @@ const handleSubmit = () => {
     return;
   }
 
-  templateStore.addTemplate({
-    name: form.name,
-    fileName: form.fileName,
-    htmlContent: form.htmlContent,
-  });
-  ElMessage.success("模板创建成功");
-  dialogVisible.value = false;
+  try {
+    await templateStore.addTemplate({
+      name: form.name,
+      fileName: form.fileName,
+      htmlContent: form.htmlContent,
+    });
+    ElMessage.success("模板创建成功");
+    dialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error("创建失败");
+  }
 };
 
 const handlePreview = (name: string, content: string) => {
@@ -77,6 +85,10 @@ const handlePreview = (name: string, content: string) => {
   previewContent.value = content;
   previewVisible.value = true;
 };
+
+onMounted(() => {
+  templateStore.fetchTemplates();
+});
 </script>
 
 <template>

@@ -1,26 +1,44 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { CardKeyTemplate } from '../types'
-import { mockTemplates } from '../mock'
+import api from '../utils/api'
 
 export const useTemplateStore = defineStore('template', () => {
-  const templates = ref<CardKeyTemplate[]>([...mockTemplates])
+  const templates = ref<CardKeyTemplate[]>([])
 
-  const addTemplate = (template: Omit<CardKeyTemplate, 'id' | 'createdAt'>) => {
-    const newTemplate: CardKeyTemplate = {
-      ...template,
-      id: String(templates.value.length + 1),
-      createdAt: new Date().toISOString().split('T')[0]
+  const fetchTemplates = async () => {
+    try {
+      const response = await api.get('/templates')
+      templates.value = response.data.templates
+    } catch (error) {
+      console.error('Failed to fetch templates:', error)
     }
-    templates.value.push(newTemplate)
   }
 
-  const deleteTemplate = (id: string) => {
-    templates.value = templates.value.filter(t => t.id !== id)
+  const addTemplate = async (template: Omit<CardKeyTemplate, 'id' | 'createdAt'>) => {
+    try {
+      const response = await api.post('/templates', template)
+      await fetchTemplates()
+      return response.data
+    } catch (error) {
+      console.error('Failed to add template:', error)
+      throw error
+    }
+  }
+
+  const deleteTemplate = async (id: string) => {
+    try {
+      await api.delete(`/templates/${id}`)
+      await fetchTemplates()
+    } catch (error) {
+      console.error('Failed to delete template:', error)
+      throw error
+    }
   }
 
   return {
     templates,
+    fetchTemplates,
     addTemplate,
     deleteTemplate
   }
