@@ -3,6 +3,7 @@ import { ref, computed, reactive } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { mockRoles, mockPermissions } from "../mock";
 import type { Role, Permission } from "../types";
+import { ArrowRight } from "@element-plus/icons-vue";
 
 const roles = ref<Role[]>([...mockRoles]);
 const allPermissions = ref<Permission[]>([...mockPermissions]);
@@ -11,6 +12,7 @@ const allPermissions = ref<Permission[]>([...mockPermissions]);
 const permDialogVisible = ref(false);
 const currentRole = ref<Role | null>(null);
 const selectedPermissions = ref<string[]>([]);
+const expandedMenus = ref<Set<string>>(new Set());
 
 // Role form dialog state
 const roleDialogVisible = ref(false);
@@ -94,7 +96,29 @@ const handleRoleSubmit = () => {
 const handleConfigPermission = (role: Role) => {
   currentRole.value = role;
   selectedPermissions.value = [...role.permissions];
+  // Expand all by default
+  expandedMenus.value = new Set(menuPermissions.value.map((m) => m.id));
   permDialogVisible.value = true;
+};
+
+const toggleExpand = (menuId: string) => {
+  if (expandedMenus.value.has(menuId)) {
+    expandedMenus.value.delete(menuId);
+  } else {
+    expandedMenus.value.add(menuId);
+  }
+};
+
+const isExpanded = (menuId: string) => {
+  return expandedMenus.value.has(menuId);
+};
+
+const expandAll = () => {
+  expandedMenus.value = new Set(menuPermissions.value.map((m) => m.id));
+};
+
+const collapseAll = () => {
+  expandedMenus.value = new Set();
 };
 
 // Toggle menu permission (menu + all its buttons)
@@ -238,6 +262,10 @@ const handleSavePermission = () => {
       :title="`权限配置 - ${currentRole?.name}`"
       width="600px"
     >
+      <div class="permission-toolbar">
+        <el-button size="small" @click="expandAll">全部展开</el-button>
+        <el-button size="small" @click="collapseAll">全部折叠</el-button>
+      </div>
       <div class="permission-tree">
         <div
           v-for="menu in menuPermissions"
@@ -245,6 +273,13 @@ const handleSavePermission = () => {
           class="permission-group"
         >
           <div class="permission-menu-row">
+            <el-icon
+              class="expand-icon"
+              :class="{ expanded: isExpanded(menu.id) }"
+              @click="toggleExpand(menu.id)"
+            >
+              <ArrowRight />
+            </el-icon>
             <el-checkbox
               :model-value="selectedPermissions.includes(menu.code)"
               @change="(val: boolean) => handleMenuChange(menu, val)"
@@ -253,7 +288,7 @@ const handleSavePermission = () => {
               <el-tag size="small" type="info">{{ menu.code }}</el-tag>
             </el-checkbox>
           </div>
-          <div class="permission-button-row">
+          <div v-show="isExpanded(menu.id)" class="permission-button-row">
             <el-checkbox
               v-for="btn in getButtonPermissions(menu.id)"
               :key="btn.id"
@@ -283,8 +318,12 @@ const handleSavePermission = () => {
   align-items: center;
 }
 
+.permission-toolbar {
+  margin-bottom: 12px;
+}
+
 .permission-tree {
-  max-height: 500px;
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -300,7 +339,23 @@ const handleSavePermission = () => {
 }
 
 .permission-menu-row {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expand-icon {
+  cursor: pointer;
+  transition: transform 0.2s;
+  color: #909399;
+}
+
+.expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.expand-icon:hover {
+  color: #409eff;
 }
 
 .menu-label {
@@ -309,7 +364,8 @@ const handleSavePermission = () => {
 }
 
 .permission-button-row {
-  padding-left: 24px;
+  padding-left: 48px;
+  padding-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
