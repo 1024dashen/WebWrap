@@ -4,6 +4,9 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import api from "../utils/api";
 import type { Role, Permission } from "../types";
 import { ArrowRight } from "@element-plus/icons-vue";
+import { useUserStore } from "../stores/user";
+
+const userStore = useUserStore();
 
 const roles = ref<Role[]>([]);
 const allPermissions = ref<Permission[]>([]);
@@ -216,7 +219,12 @@ onMounted(() => {
       <template #header>
         <div class="card-header">
           <span>角色管理</span>
-          <el-button type="primary" @click="handleAddRole">新增角色</el-button>
+          <el-button
+            v-if="userStore.hasPermission('role:add')"
+            type="primary"
+            @click="handleAddRole"
+            >新增角色</el-button
+          >
         </div>
       </template>
 
@@ -232,6 +240,7 @@ onMounted(() => {
         <el-table-column label="操作" width="220">
           <template #default="{ row }">
             <el-button
+              v-if="userStore.hasPermission('role:config')"
               size="small"
               type="primary"
               link
@@ -240,6 +249,7 @@ onMounted(() => {
               权限配置
             </el-button>
             <el-button
+              v-if="userStore.hasPermission('role:edit')"
               size="small"
               type="warning"
               link
@@ -248,6 +258,7 @@ onMounted(() => {
               编辑
             </el-button>
             <el-button
+              v-if="userStore.hasPermission('role:delete')"
               size="small"
               type="danger"
               link

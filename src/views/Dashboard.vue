@@ -5,7 +5,15 @@ import api from "../utils/api";
 
 const userStore = useUserStore();
 
-const isAdmin = computed(() => userStore.currentUser?.role === "超级管理员");
+const hasOverviewPermission = computed(() =>
+  userStore.hasPermission("dashboard:overview"),
+);
+const hasRecentProjectsPermission = computed(() =>
+  userStore.hasPermission("dashboard:recent"),
+);
+const hasSystemInfoPermission = computed(() =>
+  userStore.hasPermission("dashboard:system"),
+);
 
 const stats = ref({
   totalUsers: 0,
@@ -35,7 +43,7 @@ onMounted(() => {
   <div class="dashboard">
     <h2>欢迎回来，{{ userStore.currentUser?.username }}</h2>
 
-    <el-row v-if="isAdmin" :gutter="20" class="stats-row">
+    <el-row v-if="hasOverviewPermission" :gutter="20" class="stats-row">
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
@@ -91,7 +99,7 @@ onMounted(() => {
     </el-row>
 
     <el-row :gutter="20" style="margin-top: 20px">
-      <el-col v-if="isAdmin" :span="12">
+      <el-col v-if="hasRecentProjectsPermission" :span="12">
         <el-card>
           <template #header>
             <span>最近项目</span>
@@ -109,7 +117,7 @@ onMounted(() => {
           </el-table>
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col v-if="hasSystemInfoPermission" :span="12">
         <el-card>
           <template #header>
             <span>系统信息</span>

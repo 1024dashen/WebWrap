@@ -90,7 +90,8 @@ const handleSubmit = async () => {
 };
 
 const handlePreview = (id: string) => {
-  window.open(`http://localhost:3000/api/templates/preview/${id}`, "_blank");
+  const token = localStorage.getItem('token');
+  window.open(`http://localhost:3000/api/templates/preview/${id}?token=${token}`, "_blank");
 };
 
 onMounted(() => {
@@ -132,6 +133,7 @@ onMounted(() => {
             <p class="template-date">创建于 {{ template.createdAt }}</p>
             <div class="template-actions">
               <el-button
+                v-if="userStore.hasPermission('template:preview')"
                 size="small"
                 type="primary"
                 link
