@@ -12,6 +12,7 @@ const dialogVisible = ref(false);
 const previewVisible = ref(false);
 const previewContent = ref("");
 const previewTitle = ref("");
+const fileLoading = ref(false);
 
 const form = reactive({
   name: "",
@@ -43,15 +44,26 @@ const handleDelete = (id: string, name: string) => {
     .catch(() => {});
 };
 
-const handleFileChange = (file: File) => {
+const handleFileChange = (uploadFile: any) => {
+  const file = uploadFile.raw;
+  if (!file) {
+    ElMessage.warning("请选择文件");
+    return false;
+  }
   if (!file.name.endsWith(".html") && !file.name.endsWith(".htm")) {
     ElMessage.warning("请上传 HTML 文件");
     return false;
   }
   form.fileName = file.name;
+  fileLoading.value = true;
   const reader = new FileReader();
   reader.onload = (e) => {
     form.htmlContent = (e.target?.result as string) || "";
+    fileLoading.value = false;
+  };
+  reader.onerror = () => {
+    ElMessage.error("文件读取失败");
+    fileLoading.value = false;
   };
   reader.readAsText(file);
   return false; // prevent auto upload
@@ -189,7 +201,9 @@ onMounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="fileLoading" @click="handleSubmit"
+          >确定</el-button
+        >
       </template>
     </el-dialog>
 
