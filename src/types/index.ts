@@ -31,6 +31,7 @@ export interface Project {
   name: string
   url: string
   status: 'active' | 'archived'
+  template_id?: number | null
   createdAt: string
   cardKeyCount: number
 }

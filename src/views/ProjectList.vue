@@ -4,11 +4,13 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useProjectStore } from "../stores/project";
 import { useUserStore } from "../stores/user";
+import { useTemplateStore } from "../stores/template";
 import type { Project } from "../types";
 
 const router = useRouter();
 const projectStore = useProjectStore();
 const userStore = useUserStore();
+const templateStore = useTemplateStore();
 
 const searchQuery = ref("");
 const dialogVisible = ref(false);
@@ -19,6 +21,7 @@ const form = reactive({
   name: "",
   url: "",
   status: "active" as "active" | "archived",
+  template_id: null as number | null,
 });
 
 const filteredProjects = computed(() => {
@@ -35,6 +38,7 @@ const resetForm = () => {
   form.name = "";
   form.url = "";
   form.status = "active";
+  form.template_id = null;
   editingProject.value = null;
 };
 
@@ -51,6 +55,7 @@ const handleEdit = (row: Project, event: Event) => {
   form.name = row.name;
   form.url = row.url;
   form.status = row.status;
+  form.template_id = (row as any).template_id || null;
   dialogVisible.value = true;
 };
 
@@ -84,6 +89,7 @@ const handleSubmit = async () => {
         name: form.name,
         url: form.url,
         status: form.status,
+        template_id: form.template_id,
       });
       ElMessage.success("更新成功");
     } else {
@@ -91,6 +97,7 @@ const handleSubmit = async () => {
         name: form.name,
         url: form.url,
         status: form.status,
+        template_id: form.template_id,
       });
       ElMessage.success("添加成功");
     }
@@ -106,6 +113,7 @@ const handleEnterProject = (project: Project) => {
 
 onMounted(() => {
   projectStore.fetchProjects();
+  templateStore.fetchTemplates();
 });
 </script>
 
@@ -204,6 +212,21 @@ onMounted(() => {
             <el-radio value="active">活跃</el-radio>
             <el-radio value="archived">归档</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item label="卡密模板">
+          <el-select
+            v-model="form.template_id"
+            placeholder="请选择卡密模板（可选）"
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="template in templateStore.templates"
+              :key="template.id"
+              :label="template.name"
+              :value="Number(template.id)"
+            />
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
