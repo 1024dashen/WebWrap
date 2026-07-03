@@ -9,9 +9,6 @@ const templateStore = useTemplateStore();
 const userStore = useUserStore();
 
 const dialogVisible = ref(false);
-const previewVisible = ref(false);
-const previewContent = ref("");
-const previewTitle = ref("");
 const fileLoading = ref(false);
 
 const form = reactive({
@@ -92,10 +89,8 @@ const handleSubmit = async () => {
   }
 };
 
-const handlePreview = (name: string, content: string) => {
-  previewTitle.value = name;
-  previewContent.value = content;
-  previewVisible.value = true;
+const handlePreview = (id: string) => {
+  window.open(`http://localhost:3000/api/templates/preview/${id}`, "_blank");
 };
 
 onMounted(() => {
@@ -140,7 +135,7 @@ onMounted(() => {
                 size="small"
                 type="primary"
                 link
-                @click="handlePreview(template.name, template.htmlContent)"
+                @click="handlePreview(template.id)"
               >
                 预览
               </el-button>
@@ -206,24 +201,6 @@ onMounted(() => {
         >
       </template>
     </el-dialog>
-
-    <!-- Preview Dialog -->
-    <el-dialog
-      v-model="previewVisible"
-      :title="previewTitle + ' - 预览'"
-      width="700px"
-    >
-      <div class="preview-container">
-        <el-tabs>
-          <el-tab-pane label="渲染预览">
-            <div class="preview-render" v-html="previewContent"></div>
-          </el-tab-pane>
-          <el-tab-pane label="源代码">
-            <pre class="preview-source">{{ previewContent }}</pre>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
@@ -281,28 +258,5 @@ export default {
   margin-top: 8px;
   font-size: 12px;
   color: #67c23a;
-}
-
-.preview-container {
-  max-height: 500px;
-  overflow: auto;
-}
-
-.preview-render {
-  padding: 16px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  min-height: 200px;
-}
-
-.preview-source {
-  background: #f5f5f5;
-  padding: 16px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
 }
 </style>

@@ -57,9 +57,11 @@ export const useUserStore = defineStore('user', () => {
   const fetchPermissions = async () => {
     try {
       const response = await api.get('/auth/me')
+      currentUser.value = response.data.user
       userPermissions.value = response.data.permissions || []
     } catch (error) {
       console.error('Failed to fetch permissions:', error)
+      throw error
     }
   }
 
