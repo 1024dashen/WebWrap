@@ -90,8 +90,11 @@ const handleSubmit = async () => {
 };
 
 const handlePreview = (id: string) => {
-  const token = localStorage.getItem('token');
-  window.open(`http://localhost:3000/api/templates/preview/${id}?token=${token}`, "_blank");
+  const token = localStorage.getItem("token");
+  window.open(
+    `http://localhost:3000/api/templates/preview/${id}?token=${token}`,
+    "_blank",
+  );
 };
 
 onMounted(() => {
