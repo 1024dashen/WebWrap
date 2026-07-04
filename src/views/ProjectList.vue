@@ -7,6 +7,7 @@ import { useUserStore } from '../stores/user'
 import { useTemplateStore } from '../stores/template'
 import type { Project } from '../types'
 import { copyToClipboard } from '../utils/clipboard'
+import { formatDate } from '../utils/date'
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -243,11 +244,11 @@ onMounted(() => {
                         <el-tag type="info">{{ row.cardKeyCount }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column
-                    prop="created_at"
-                    label="创建日期"
-                    width="180"
-                />
+                <el-table-column prop="created_at" label="创建日期" width="180">
+                    <template #default="{ row }">
+                        {{ formatDate(row.created_at) }}
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" width="150">
                     <template #default="{ row }">
                         <el-button

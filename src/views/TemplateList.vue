@@ -3,6 +3,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTemplateStore } from '../stores/template'
 import { useUserStore } from '../stores/user'
+import { formatDate } from '../utils/date'
 import { UploadFilled } from '@element-plus/icons-vue'
 
 const templateStore = useTemplateStore()
@@ -133,7 +134,7 @@ onMounted(() => {
                         <h3 class="template-name">{{ template.name }}</h3>
                         <p class="template-file">{{ template.fileName }}</p>
                         <p class="template-date">
-                            创建于 {{ template.created_at }}
+                            创建于 {{ formatDate(template.created_at) }}
                         </p>
                         <div class="template-actions">
                             <el-button

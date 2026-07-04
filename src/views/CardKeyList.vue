@@ -7,6 +7,7 @@ import { useProjectStore } from '../stores/project'
 import { useUserStore } from '../stores/user'
 import type { CardKey } from '../types'
 import { copyToClipboard } from '../utils/clipboard'
+import { formatDate } from '../utils/date'
 import { ArrowLeft, ArrowDown } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -32,7 +33,6 @@ const form = reactive({
     duration: 2592000,
     remark: '月卡',
     oneDeviceOneCode: true,
-    expireAt: '',
     count: 1,
 })
 
@@ -138,7 +138,6 @@ const handleAdd = () => {
     form.remark = getTypeLabel('monthly')
     form.oneDeviceOneCode = true
     form.status = 'unused'
-    form.expireAt = ''
     form.count = 1
     dialogVisible.value = true
 }
@@ -166,7 +165,6 @@ const handleEdit = (row: CardKey) => {
     form.remark = row.remark ?? getTypeLabel(row.type)
     form.oneDeviceOneCode = row.oneDeviceOneCode ?? false
     form.status = row.status
-    form.expireAt = row.expireAt || ''
     dialogVisible.value = true
 }
 
@@ -281,7 +279,6 @@ const handleSubmit = async () => {
                 duration: form.duration,
                 remark: form.remark,
                 oneDeviceOneCode: form.oneDeviceOneCode,
-                expireAt: form.expireAt || undefined,
             })
             ElMessage.success('更新成功')
             dialogVisible.value = false
@@ -304,7 +301,6 @@ const handleSubmit = async () => {
                 duration: form.duration,
                 remark: form.remark,
                 oneDeviceOneCode: form.oneDeviceOneCode,
-                expireAt: form.expireAt || undefined,
             })
             ElMessage.success('添加成功')
         } else {
@@ -438,14 +434,14 @@ onMounted(() => {
                         {{ row.deviceId || '-' }}
                     </template>
                 </el-table-column>
-                <el-table-column
-                    prop="createdAt"
-                    label="创建日期"
-                    width="200"
-                />
+                <el-table-column prop="createdAt" label="创建日期" width="200">
+                    <template #default="{ row }">
+                        {{ formatDate(row.createdAt) }}
+                    </template>
+                </el-table-column>
                 <el-table-column label="使用时间" width="200">
                     <template #default="{ row }">
-                        {{ row.usedAt || '-' }}
+                        {{ formatDate(row.usedAt) }}
                     </template>
                 </el-table-column>
                 <el-table-column label="操作" width="150">
@@ -601,15 +597,6 @@ onMounted(() => {
                         style="width: 100%"
                     />
                 </el-form-item>
-                <el-form-item v-if="editingCardKey" label="过期时间">
-                    <el-date-picker
-                        v-model="form.expireAt"
-                        type="date"
-                        placeholder="选择过期时间"
-                        style="width: 100%"
-                        value-format="YYYY-MM-DD"
-                    />
-                </el-form-item>
                 <el-form-item label="功能开关">
                     <el-switch
                         v-model="form.oneDeviceOneCode"
@@ -653,6 +640,9 @@ onMounted(() => {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+}
+.header-actions :deep(.el-button + .el-button) {
+    margin-left: 0;
 }
 
 .card-key {

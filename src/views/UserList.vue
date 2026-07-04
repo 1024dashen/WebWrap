@@ -3,6 +3,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import api from '../utils/api'
+import { formatDate } from '../utils/date'
 import type { User } from '../types'
 
 const userStore = useUserStore()
@@ -179,11 +180,11 @@ onMounted(() => {
                         </el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column
-                    prop="created_at"
-                    label="创建日期"
-                    width="180"
-                />
+                <el-table-column prop="created_at" label="创建日期" width="180">
+                    <template #default="{ row }">
+                        {{ formatDate(row.created_at) }}
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" width="140">
                     <template #default="{ row }">
                         <el-button
