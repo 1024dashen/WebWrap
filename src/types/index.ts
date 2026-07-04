@@ -30,7 +30,7 @@ export interface Project {
     id: string
     name: string
     url: string
-    status: 'active' | 'archived'
+    status: 'active' | 'disabled'
     template_id?: number | null
     createdAt: string
     cardKeyCount: number

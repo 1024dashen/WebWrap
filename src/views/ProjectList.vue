@@ -22,7 +22,7 @@ const pageSize = ref(10)
 const form = reactive({
     name: '',
     url: '',
-    status: 'active' as 'active' | 'archived',
+    status: 'active' as 'active' | 'disabled',
     template_id: null as number | null,
 })
 
@@ -226,9 +226,11 @@ onMounted(() => {
                 <el-table-column prop="status" label="状态" width="100">
                     <template #default="{ row }">
                         <el-tag
-                            :type="row.status === 'active' ? 'success' : 'info'"
+                            :type="
+                                row.status === 'active' ? 'success' : 'danger'
+                            "
                         >
-                            {{ row.status === 'active' ? '活跃' : '已归档' }}
+                            {{ row.status === 'active' ? '可用' : '禁用' }}
                         </el-tag>
                     </template>
                 </el-table-column>
@@ -315,8 +317,8 @@ onMounted(() => {
                 </el-form-item>
                 <el-form-item label="状态">
                     <el-radio-group v-model="form.status">
-                        <el-radio value="active">活跃</el-radio>
-                        <el-radio value="archived">归档</el-radio>
+                        <el-radio value="active">可用</el-radio>
+                        <el-radio value="disabled">禁用</el-radio>
                     </el-radio-group>
                 </el-form-item>
             </el-form>
