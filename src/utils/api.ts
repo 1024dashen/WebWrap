@@ -27,8 +27,8 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             localStorage.removeItem('token')
             // Only redirect if not already on login page
-            if (window.location.pathname !== '/login') {
-                window.location.href = '/login'
+            if (!window.location.pathname.startsWith('/webwrap/login')) {
+                window.location.href = '/webwrap/login'
             }
         }
         return Promise.reject(error)
