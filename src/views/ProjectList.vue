@@ -200,7 +200,7 @@ onMounted(() => {
                     label="创建日期"
                     width="120"
                 />
-                <el-table-column label="操作" width="150" fixed="right">
+                <el-table-column label="操作" width="150">
                     <template #default="{ row }">
                         <el-button
                             v-if="userStore.hasPermission('project:edit')"
