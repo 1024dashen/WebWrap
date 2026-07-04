@@ -87,6 +87,10 @@
             .auth-card button:hover {
                 background: #c73650;
             }
+            .auth-card button:disabled {
+                background: #888;
+                cursor: not-allowed;
+            }
             .auth-error {
                 margin-top: 12px;
                 font-size: 13px;
@@ -126,29 +130,103 @@
 
         <!-- 代理内容区 -->
         <div id="content-frame">
-            <iframe
-                src="https://www.bkdau.cn/game/elaile/ver/0616/web/index.html?tiaoguocode=1&tiaoshi=1&lang=zh&noloadzip=1&abTag=V22B&bufayu=0&code=6J9TY"
-                allowfullscreen
-            ></iframe>
+            <iframe id="proxy-iframe" allowfullscreen></iframe>
         </div>
 
         <script>
+            const API_BASE = window.location.origin
             const overlay = document.getElementById('auth-overlay')
             const content = document.getElementById('content-frame')
             const input = document.getElementById('key-input')
             const btn = document.getElementById('verify-btn')
             const errorMsg = document.getElementById('error-msg')
+            const iframe = document.getElementById('proxy-iframe')
 
-            function verify() {
+            // Get project_id from server-injected global variable
+            const projectId = window.__PROJECT_ID__
+
+            // Generate or retrieve 8-char random device ID
+            function getDeviceId() {
+                let deviceId = localStorage.getItem('device_id')
+                if (!deviceId) {
+                    const chars =
+                        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+                    deviceId = ''
+                    for (let i = 0; i < 8; i++) {
+                        deviceId += chars.charAt(
+                            Math.floor(Math.random() * chars.length),
+                        )
+                    }
+                    localStorage.setItem('device_id', deviceId)
+                }
+                return deviceId
+            }
+            const deviceId = getDeviceId()
+
+            async function verify() {
                 const key = input.value.trim()
                 if (!key) {
                     errorMsg.textContent = '请输入卡密'
                     input.focus()
                     return
                 }
-                // 验证通过：隐藏卡密界面，显示 iframe
-                overlay.style.display = 'none'
-                content.style.display = 'block'
+                if (!projectId) {
+                    errorMsg.textContent = '缺少项目信息，请通过正确链接访问'
+                    return
+                }
+
+                btn.disabled = true
+                btn.textContent = '验证中...'
+                errorMsg.textContent = ''
+
+                try {
+                    const params = new URLSearchParams({
+                        project_id: projectId,
+                        device_id: deviceId,
+                    })
+                    const res = await fetch(
+                        `${API_BASE}/api/cardkeys/verify/${encodeURIComponent(key)}?${params}`,
+                    )
+                    const data = await res.json()
+
+                    if (!data.valid) {
+                        errorMsg.textContent = data.error || '验证失败'
+                        btn.disabled = false
+                        btn.textContent = '验 证'
+                        return
+                    }
+
+                    if (!data.projectUrl) {
+                        errorMsg.textContent = '未获取到项目地址'
+                        btn.disabled = false
+                        btn.textContent = '验 证'
+                        return
+                    }
+
+                    // Show expiry info if available
+                    if (data.expireAt) {
+                        const expireDate = new Date(data.expireAt)
+                        const infoEl = document.createElement('div')
+                        infoEl.style.cssText =
+                            'margin-top:10px;font-size:12px;color:rgba(255,255,255,0.5);'
+                        infoEl.textContent =
+                            '有效期至：' +
+                            expireDate.toLocaleDateString('zh-CN')
+                        errorMsg.parentNode.insertBefore(
+                            infoEl,
+                            errorMsg.nextSibling,
+                        )
+                    }
+
+                    // Load project URL in iframe
+                    iframe.src = data.projectUrl
+                    overlay.style.display = 'none'
+                    content.style.display = 'block'
+                } catch (e) {
+                    errorMsg.textContent = '网络异常，请稍后重试'
+                    btn.disabled = false
+                    btn.textContent = '验 证'
+                }
             }
 
             btn.addEventListener('click', verify)
@@ -156,7 +234,7 @@
                 if (e.key === 'Enter') verify()
             })
 
-            // 自动聚焦输入框
+            // Auto focus input
             input.focus()
         </script>
     </body>
