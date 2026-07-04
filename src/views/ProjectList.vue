@@ -6,6 +6,7 @@ import { useProjectStore } from '../stores/project'
 import { useUserStore } from '../stores/user'
 import { useTemplateStore } from '../stores/template'
 import type { Project } from '../types'
+import { copyToClipboard } from '../utils/clipboard'
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -139,8 +140,7 @@ const handleCopyLink = (project: Project, event: Event) => {
     event.stopPropagation()
     const link = getCardKeyLink(project)
     if (!link) return
-    navigator.clipboard
-        .writeText(link)
+    copyToClipboard(link)
         .then(() => {
             ElMessage.success('链接已复制到剪贴板')
         })

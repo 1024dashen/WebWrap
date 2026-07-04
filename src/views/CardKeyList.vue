@@ -6,6 +6,7 @@ import { useCardKeyStore } from '../stores/cardkey'
 import { useProjectStore } from '../stores/project'
 import { useUserStore } from '../stores/user'
 import type { CardKey } from '../types'
+import { copyToClipboard } from '../utils/clipboard'
 import { ArrowLeft, ArrowDown } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -144,7 +145,7 @@ const handleAdd = () => {
 
 const handleCopyUrl = () => {
     if (project.value?.url) {
-        navigator.clipboard.writeText(project.value.url)
+        copyToClipboard(project.value.url)
         ElMessage.success('项目链接已复制到剪贴板')
     } else {
         ElMessage.warning('未找到项目链接')
@@ -324,7 +325,7 @@ const handleBack = () => {
 }
 
 const handleCopyKey = (key: string) => {
-    navigator.clipboard.writeText(key)
+    copyToClipboard(key)
     ElMessage.success('卡密已复制到剪贴板')
 }
 
