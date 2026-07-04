@@ -236,10 +236,6 @@ onMounted(() => {
                 />
             </div>
 
-            <el-empty
-                v-if="filteredProjects.length === 0"
-                description="暂无项目"
-            />
         </el-card>
 
         <!-- Dialog -->
