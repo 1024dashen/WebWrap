@@ -132,7 +132,7 @@ const handleSubmit = async () => {
 
 const getCardKeyLink = (project: Project) => {
     if (!project.template_id) return ''
-    return `http://localhost:3000/api/templates/preview/${project.template_id}/${project.id}`
+    return `${import.meta.env.VITE_BASE_URL}/api/templates/preview/${project.template_id}/${project.id}`
 }
 
 const handleCopyLink = (project: Project, event: Event) => {

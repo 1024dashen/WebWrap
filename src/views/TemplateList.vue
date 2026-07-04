@@ -90,7 +90,10 @@ const handleSubmit = async () => {
 }
 
 const handlePreview = (id: string) => {
-    window.open(`http://localhost:3000/api/templates/preview/${id}`, '_blank')
+    window.open(
+        `${import.meta.env.VITE_BASE_URL}/api/templates/preview/${id}`,
+        '_blank',
+    )
 }
 
 onMounted(() => {
