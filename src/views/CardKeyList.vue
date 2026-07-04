@@ -6,7 +6,7 @@ import { useCardKeyStore } from '../stores/cardkey'
 import { useProjectStore } from '../stores/project'
 import { useUserStore } from '../stores/user'
 import type { CardKey } from '../types'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowDown } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -215,6 +215,23 @@ const handleRestore = (row: CardKey) => {
             }
         })
         .catch(() => {})
+}
+
+const handleDropdownCommand = (command: string, row: CardKey) => {
+    switch (command) {
+        case 'disable':
+            handleDisable(row)
+            break
+        case 'restore':
+            handleRestore(row)
+            break
+        case 'unbind':
+            handleUnbind(row)
+            break
+        case 'delete':
+            handleDelete(row)
+            break
+    }
 }
 
 const handleUnbind = (row: CardKey) => {
@@ -428,58 +445,79 @@ onMounted(() => {
                     <template #default="{ row }">
                         <el-button
                             v-if="userStore.hasPermission('cardkey:edit')"
-                            size="small"
                             type="primary"
                             link
                             @click="handleEdit(row)"
                         >
                             编辑
                         </el-button>
-                        <el-button
+                        <el-dropdown
                             v-if="
-                                userStore.hasPermission('cardkey:edit') &&
-                                row.status !== 'disabled'
+                                userStore.hasPermission('cardkey:edit') ||
+                                userStore.hasPermission('cardkey:delete')
                             "
-                            size="small"
-                            type="warning"
-                            link
-                            @click="handleDisable(row)"
-                        >
-                            禁用
-                        </el-button>
-                        <el-button
-                            v-if="
-                                userStore.hasPermission('cardkey:edit') &&
-                                row.status === 'disabled'
+                            trigger="hover"
+                            @command="
+                                (cmd: string) => handleDropdownCommand(cmd, row)
                             "
-                            size="small"
-                            type="success"
-                            link
-                            @click="handleRestore(row)"
                         >
-                            恢复
-                        </el-button>
-                        <el-button
-                            v-if="
-                                userStore.hasPermission('cardkey:edit') &&
-                                row.deviceId
-                            "
-                            size="small"
-                            type="info"
-                            link
-                            @click="handleUnbind(row)"
-                        >
-                            解绑
-                        </el-button>
-                        <el-button
-                            v-if="userStore.hasPermission('cardkey:delete')"
-                            size="small"
-                            type="danger"
-                            link
-                            @click="handleDelete(row)"
-                        >
-                            删除
-                        </el-button>
+                            <span class="more-actions">
+                                更多
+                                <el-icon>
+                                    <arrow-down />
+                                </el-icon>
+                            </span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item
+                                        v-if="
+                                            userStore.hasPermission(
+                                                'cardkey:edit',
+                                            ) && row.status !== 'disabled'
+                                        "
+                                        command="disable"
+                                    >
+                                        禁用
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        v-if="
+                                            userStore.hasPermission(
+                                                'cardkey:edit',
+                                            ) && row.status === 'disabled'
+                                        "
+                                        command="restore"
+                                    >
+                                        恢复
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        v-if="
+                                            userStore.hasPermission(
+                                                'cardkey:edit',
+                                            ) && row.deviceId
+                                        "
+                                        command="unbind"
+                                    >
+                                        解绑
+                                    </el-dropdown-item>
+                                    <el-dropdown-item
+                                        v-if="
+                                            userStore.hasPermission(
+                                                'cardkey:delete',
+                                            )
+                                        "
+                                        command="delete"
+                                        divided
+                                    >
+                                        <span
+                                            style="
+                                                color: var(--el-color-danger);
+                                            "
+                                            >删除</span
+                                        >
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                     </template>
                 </el-table-column>
             </el-table>
@@ -625,5 +663,11 @@ onMounted(() => {
     display: flex;
     justify-content: flex-end;
     margin-top: 16px;
+}
+
+.more-actions {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 </style>

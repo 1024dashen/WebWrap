@@ -1,0 +1,29 @@
+请帮我生成一个卡密验证模板页面（单个独立 HTML 文件），要求如下：
+
+## 运行环境
+- 这是一个由后端服务动态提供的 HTML 页面，通过路由 `/api/templates/preview/:templateId/:projectId` 访问
+- 服务端会在 `<head>` 中自动注入 `<script>window.__PROJECT_ID__="xxx";</script>`，模板通过 `window.__PROJECT_ID__` 获取当前项目 ID
+- 不依赖任何外部框架或库，纯 HTML + CSS + 原生 JS
+
+## 核心交互流程
+1. 页面打开后全屏展示卡密验证界面（覆盖整个视口）
+2. 页面加载时自动生成/读取一个 8 位随机字符串作为设备 ID，存入 `localStorage`（key 为 `device_id`），同一设备复用
+3. 用户输入卡密后，点击验证按钮或按回车触发验证
+4. 调用验证接口：`GET ${window.location.origin}/api/cardkeys/verify/${key}?project_id=${projectId}&device_id=${deviceId}`
+5. 接口返回格式：
+   - 成功：`{ valid: true, type: "monthly", expireAt: "2025-12-31", status: "used", projectUrl: "https://..." }`
+   - 失败：`{ valid: false, error: "错误信息" }`
+6. 验证成功后，隐藏验证界面，用全屏 iframe 加载返回的 `projectUrl`
+7. 如果有 `expireAt`，在验证界面展示有效期信息
+
+## 页面结构（必须包含）
+```html
+<!-- 卡密验证覆盖层，id 必须为 auth-overlay -->
+<div id="auth-overlay">
+  <!-- 验证卡片：标题、描述文字、卡密输入框、验证按钮、错误提示区域 -->
+</div>
+
+<!-- iframe 容器，id 必须为 content-frame，初始 display:none -->
+<div id="content-frame">
+  <iframe id="proxy-iframe" allowfullscreen></iframe>
+</div>
