@@ -66,6 +66,7 @@ const statusOptions = [
     { label: '未使用', value: 'unused' },
     { label: '已使用', value: 'used' },
     { label: '已过期', value: 'expired' },
+    { label: '已禁用', value: 'disabled' },
 ]
 
 const filteredCardKeys = computed(() => {
@@ -100,6 +101,7 @@ const getStatusType = (status: string) => {
         case 'used':
             return 'warning'
         case 'expired':
+        case 'disabled':
             return 'danger'
         default:
             return 'info'
@@ -153,6 +155,68 @@ const handleDelete = (row: CardKey) => {
                 ElMessage.success('删除成功')
             } catch (error) {
                 ElMessage.error('删除失败')
+            }
+        })
+        .catch(() => {})
+}
+
+const handleDisable = (row: CardKey) => {
+    ElMessageBox.confirm('确定要禁用此卡密吗？禁用后将无法使用。', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+    })
+        .then(async () => {
+            try {
+                await cardKeyStore.updateCardKey(row.id, { status: 'disabled' })
+                await cardKeyStore.fetchCardKeysByProjectId(projectId)
+                ElMessage.success('已禁用')
+            } catch (error) {
+                ElMessage.error('操作失败')
+            }
+        })
+        .catch(() => {})
+}
+
+const handleRestore = (row: CardKey) => {
+    ElMessageBox.confirm('确定要恢复此卡密吗？恢复后可正常使用。', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info',
+    })
+        .then(async () => {
+            try {
+                await cardKeyStore.updateCardKey(row.id, { status: 'unused' })
+                await cardKeyStore.fetchCardKeysByProjectId(projectId)
+                ElMessage.success('已恢复')
+            } catch (error) {
+                ElMessage.error('操作失败')
+            }
+        })
+        .catch(() => {})
+}
+
+const handleUnbind = (row: CardKey) => {
+    ElMessageBox.confirm(
+        '确定要解绑此卡密吗？将移除设备绑定并恢复为未使用状态。',
+        '提示',
+        {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+        },
+    )
+        .then(async () => {
+            try {
+                await cardKeyStore.updateCardKey(row.id, {
+                    status: 'unused',
+                    deviceId: '',
+                    usedBy: '',
+                })
+                await cardKeyStore.fetchCardKeysByProjectId(projectId)
+                ElMessage.success('解绑成功')
+            } catch (error) {
+                ElMessage.error('操作失败')
             }
         })
         .catch(() => {})
@@ -340,7 +404,7 @@ onMounted(() => {
                     label="创建日期"
                     width="120"
                 />
-                <el-table-column label="操作" width="150" fixed="right">
+                <el-table-column label="操作" width="250" fixed="right">
                     <template #default="{ row }">
                         <el-button
                             v-if="userStore.hasPermission('cardkey:edit')"
@@ -350,6 +414,42 @@ onMounted(() => {
                             @click="handleEdit(row)"
                         >
                             编辑
+                        </el-button>
+                        <el-button
+                            v-if="
+                                userStore.hasPermission('cardkey:edit') &&
+                                row.status !== 'disabled'
+                            "
+                            size="small"
+                            type="warning"
+                            link
+                            @click="handleDisable(row)"
+                        >
+                            禁用
+                        </el-button>
+                        <el-button
+                            v-if="
+                                userStore.hasPermission('cardkey:edit') &&
+                                row.status === 'disabled'
+                            "
+                            size="small"
+                            type="success"
+                            link
+                            @click="handleRestore(row)"
+                        >
+                            恢复
+                        </el-button>
+                        <el-button
+                            v-if="
+                                userStore.hasPermission('cardkey:edit') &&
+                                row.deviceId
+                            "
+                            size="small"
+                            type="info"
+                            link
+                            @click="handleUnbind(row)"
+                        >
+                            解绑
                         </el-button>
                         <el-button
                             v-if="userStore.hasPermission('cardkey:delete')"

@@ -42,7 +42,7 @@ export interface CardKey {
     projectId: string
     key: string
     type: 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'permanent'
-    status: 'unused' | 'used' | 'expired'
+    status: 'unused' | 'used' | 'expired' | 'disabled'
     duration?: number
     remark?: string
     oneDeviceOneCode?: boolean
