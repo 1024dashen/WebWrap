@@ -199,14 +199,6 @@ onMounted(() => {
                         已选择: {{ form.fileName }}
                     </p>
                 </el-form-item>
-                <el-form-item v-if="form.htmlContent" label="文件预览">
-                    <el-input
-                        v-model="form.htmlContent"
-                        type="textarea"
-                        :rows="6"
-                        readonly
-                    />
-                </el-form-item>
             </el-form>
             <template #footer>
                 <el-button @click="dialogVisible = false">取消</el-button>
