@@ -28,7 +28,7 @@ const form = reactive({
     status: 'unused' as CardKey['status'],
     duration: 2592000,
     remark: '月卡',
-    oneDeviceOneCode: false,
+    oneDeviceOneCode: true,
     expireAt: '',
     count: 1,
 })
@@ -112,7 +112,7 @@ const handleAdd = () => {
     form.type = 'monthly'
     form.duration = typeDurationMap['monthly']
     form.remark = getTypeLabel('monthly')
-    form.oneDeviceOneCode = false
+    form.oneDeviceOneCode = true
     form.status = 'unused'
     form.expireAt = ''
     form.count = 1
