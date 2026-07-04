@@ -443,81 +443,86 @@ onMounted(() => {
                 </el-table-column>
                 <el-table-column label="操作" width="150">
                     <template #default="{ row }">
-                        <el-button
-                            v-if="userStore.hasPermission('cardkey:edit')"
-                            type="primary"
-                            link
-                            @click="handleEdit(row)"
-                        >
-                            编辑
-                        </el-button>
-                        <el-dropdown
-                            v-if="
-                                userStore.hasPermission('cardkey:edit') ||
-                                userStore.hasPermission('cardkey:delete')
-                            "
-                            trigger="hover"
-                            @command="
-                                (cmd: string) => handleDropdownCommand(cmd, row)
-                            "
-                        >
-                            <span class="more-actions">
-                                更多
-                                <el-icon>
-                                    <arrow-down />
-                                </el-icon>
-                            </span>
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item
-                                        v-if="
-                                            userStore.hasPermission(
-                                                'cardkey:edit',
-                                            ) && row.status !== 'disabled'
-                                        "
-                                        command="disable"
-                                    >
-                                        禁用
-                                    </el-dropdown-item>
-                                    <el-dropdown-item
-                                        v-if="
-                                            userStore.hasPermission(
-                                                'cardkey:edit',
-                                            ) && row.status === 'disabled'
-                                        "
-                                        command="restore"
-                                    >
-                                        恢复
-                                    </el-dropdown-item>
-                                    <el-dropdown-item
-                                        v-if="
-                                            userStore.hasPermission(
-                                                'cardkey:edit',
-                                            ) && row.deviceId
-                                        "
-                                        command="unbind"
-                                    >
-                                        解绑
-                                    </el-dropdown-item>
-                                    <el-dropdown-item
-                                        v-if="
-                                            userStore.hasPermission(
-                                                'cardkey:delete',
-                                            )
-                                        "
-                                        command="delete"
-                                        divided
-                                    >
-                                        <span
-                                            style="
-                                                color: var(--el-color-danger);
+                        <div class="action-buttons">
+                            <el-button
+                                v-if="userStore.hasPermission('cardkey:edit')"
+                                type="primary"
+                                link
+                                @click="handleEdit(row)"
+                            >
+                                编辑
+                            </el-button>
+                            <el-dropdown
+                                v-if="
+                                    userStore.hasPermission('cardkey:edit') ||
+                                    userStore.hasPermission('cardkey:delete')
+                                "
+                                trigger="hover"
+                                @command="
+                                    (cmd: string) =>
+                                        handleDropdownCommand(cmd, row)
+                                "
+                            >
+                                <span class="more-actions">
+                                    更多
+                                    <el-icon>
+                                        <arrow-down />
+                                    </el-icon>
+                                </span>
+                                <template #dropdown>
+                                    <el-dropdown-menu>
+                                        <el-dropdown-item
+                                            v-if="
+                                                userStore.hasPermission(
+                                                    'cardkey:edit',
+                                                ) && row.status !== 'disabled'
                                             "
-                                            >删除</span
+                                            command="disable"
                                         >
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
-                        </el-dropdown>
+                                            禁用
+                                        </el-dropdown-item>
+                                        <el-dropdown-item
+                                            v-if="
+                                                userStore.hasPermission(
+                                                    'cardkey:edit',
+                                                ) && row.status === 'disabled'
+                                            "
+                                            command="restore"
+                                        >
+                                            恢复
+                                        </el-dropdown-item>
+                                        <el-dropdown-item
+                                            v-if="
+                                                userStore.hasPermission(
+                                                    'cardkey:edit',
+                                                ) && row.deviceId
+                                            "
+                                            command="unbind"
+                                        >
+                                            解绑
+                                        </el-dropdown-item>
+                                        <el-dropdown-item
+                                            v-if="
+                                                userStore.hasPermission(
+                                                    'cardkey:delete',
+                                                )
+                                            "
+                                            command="delete"
+                                            divided
+                                        >
+                                            <span
+                                                style="
+                                                    color: var(
+                                                        --el-color-danger
+                                                    );
+                                                "
+                                                >删除</span
+                                            >
+                                        </el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </template>
+                            </el-dropdown>
+                        </div>
                     </template>
                 </el-table-column>
             </el-table>
@@ -669,5 +674,13 @@ onMounted(() => {
     cursor: pointer;
     display: flex;
     align-items: center;
+    color: var(--el-color-info);
+    font-size: 14px;
+}
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 </style>
