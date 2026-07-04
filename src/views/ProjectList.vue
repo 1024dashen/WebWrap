@@ -78,11 +78,15 @@ const handleEdit = (row: Project, event: Event) => {
 
 const handleDelete = (row: Project, event: Event) => {
     event.stopPropagation()
-    ElMessageBox.confirm(`确定要删除项目 "${row.name}" 吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-    })
+    ElMessageBox.confirm(
+        `确定要删除项目 "${row.name}" 吗？该项目下的所有卡密也将被一并删除，此操作不可恢复。`,
+        '提示',
+        {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+        },
+    )
         .then(async () => {
             try {
                 await projectStore.deleteProject(row.id)
