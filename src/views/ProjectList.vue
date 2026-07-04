@@ -126,6 +126,25 @@ const handleSubmit = async () => {
     }
 }
 
+const getCardKeyLink = (project: Project) => {
+    if (!project.template_id) return ''
+    return `http://localhost:3000/api/templates/preview/${project.template_id}/${project.id}`
+}
+
+const handleCopyLink = (project: Project, event: Event) => {
+    event.stopPropagation()
+    const link = getCardKeyLink(project)
+    if (!link) return
+    navigator.clipboard
+        .writeText(link)
+        .then(() => {
+            ElMessage.success('链接已复制到剪贴板')
+        })
+        .catch(() => {
+            ElMessage.error('复制失败')
+        })
+}
+
 const handleEnterProject = (project: Project) => {
     router.push(`/projects/${project.id}/cardkeys`)
 }
@@ -175,6 +194,30 @@ onMounted(() => {
                 <el-table-column prop="url" label="项目URL" min-width="200">
                     <template #default="{ row }">
                         <span class="url-text">{{ row.url }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="卡密链接" min-width="200">
+                    <template #default="{ row }">
+                        <template v-if="getCardKeyLink(row)">
+                            <el-link
+                                type="success"
+                                :href="getCardKeyLink(row)"
+                                target="_blank"
+                                @click.stop
+                                class="cardkey-link"
+                            >
+                                查看卡密页
+                            </el-link>
+                            <el-button
+                                size="small"
+                                type="success"
+                                link
+                                @click.stop="handleCopyLink(row, $event)"
+                            >
+                                复制
+                            </el-button>
+                        </template>
+                        <span v-else class="no-link">-</span>
                     </template>
                 </el-table-column>
                 <el-table-column prop="status" label="状态" width="100">
@@ -309,6 +352,14 @@ onMounted(() => {
 .url-text {
     font-size: 13px;
     color: #666;
+}
+
+.cardkey-link {
+    margin-right: 4px;
+}
+
+.no-link {
+    color: #ccc;
 }
 
 .pagination-wrap {
