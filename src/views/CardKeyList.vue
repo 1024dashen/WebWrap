@@ -28,6 +28,7 @@ const form = reactive({
     status: 'unused' as CardKey['status'],
     duration: 2592000,
     remark: '月卡',
+    oneDeviceOneCode: false,
     expireAt: '',
     count: 1,
 })
@@ -111,6 +112,7 @@ const handleAdd = () => {
     form.type = 'monthly'
     form.duration = typeDurationMap['monthly']
     form.remark = getTypeLabel('monthly')
+    form.oneDeviceOneCode = false
     form.status = 'unused'
     form.expireAt = ''
     form.count = 1
@@ -132,6 +134,7 @@ const handleEdit = (row: CardKey) => {
     form.type = row.type
     form.duration = row.duration ?? typeDurationMap[row.type]
     form.remark = row.remark ?? getTypeLabel(row.type)
+    form.oneDeviceOneCode = row.oneDeviceOneCode ?? false
     form.status = row.status
     form.expireAt = row.expireAt || ''
     dialogVisible.value = true
@@ -168,6 +171,7 @@ const handleSubmit = async () => {
                 status: form.status,
                 duration: form.duration,
                 remark: form.remark,
+                oneDeviceOneCode: form.oneDeviceOneCode,
                 expireAt: form.expireAt || undefined,
             })
             ElMessage.success('更新成功')
@@ -190,6 +194,7 @@ const handleSubmit = async () => {
                 status: form.status,
                 duration: form.duration,
                 remark: form.remark,
+                oneDeviceOneCode: form.oneDeviceOneCode,
                 expireAt: form.expireAt || undefined,
             })
             ElMessage.success('添加成功')
@@ -201,6 +206,7 @@ const handleSubmit = async () => {
                 form.status,
                 form.duration,
                 form.remark,
+                form.oneDeviceOneCode,
             )
             ElMessage.success(`已生成 ${count} 张卡密`)
         }
@@ -232,12 +238,12 @@ onMounted(() => {
             <template #header>
                 <div class="card-header">
                     <div class="header-left">
-                        <el-button :icon="ArrowLeft" @click="handleBack"
-                            >返回</el-button
-                        >
-                        <span class="title"
-                            >{{ project?.name }} - 卡密管理</span
-                        >
+                        <el-button :icon="ArrowLeft" @click="handleBack">
+                            返回
+                        </el-button>
+                        <span class="title">
+                            {{ project?.name }} - 卡密管理
+                        </span>
                     </div>
                     <div class="header-actions">
                         <el-input
@@ -322,6 +328,11 @@ onMounted(() => {
                 <el-table-column prop="usedBy" label="使用者" width="120">
                     <template #default="{ row }">
                         {{ row.usedBy || '-' }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="deviceId" label="设备ID" min-width="150">
+                    <template #default="{ row }">
+                        {{ row.deviceId || '-' }}
                     </template>
                 </el-table-column>
                 <el-table-column
@@ -415,6 +426,13 @@ onMounted(() => {
                         placeholder="选择过期时间"
                         style="width: 100%"
                         value-format="YYYY-MM-DD"
+                    />
+                </el-form-item>
+                <el-form-item label="功能开关">
+                    <el-switch
+                        v-model="form.oneDeviceOneCode"
+                        active-text="一机一码"
+                        inactive-text=""
                     />
                 </el-form-item>
                 <el-form-item label="备注">

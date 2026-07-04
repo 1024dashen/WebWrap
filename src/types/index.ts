@@ -45,6 +45,8 @@ export interface CardKey {
     status: 'unused' | 'used' | 'expired'
     duration?: number
     remark?: string
+    oneDeviceOneCode?: boolean
+    deviceId?: string
     expireAt?: string
     usedBy?: string
     createdAt: string

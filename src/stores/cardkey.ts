@@ -59,6 +59,7 @@ export const useCardKeyStore = defineStore('cardkey', () => {
         status: CardKey['status'] = 'unused',
         duration?: number,
         remark?: string,
+        oneDeviceOneCode?: boolean,
     ) => {
         try {
             const response = await api.post('/cardkeys/batch', {
@@ -68,6 +69,7 @@ export const useCardKeyStore = defineStore('cardkey', () => {
                 status,
                 duration,
                 remark,
+                oneDeviceOneCode,
             })
             return response.data
         } catch (error) {
