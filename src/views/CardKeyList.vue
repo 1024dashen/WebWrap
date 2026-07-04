@@ -143,12 +143,18 @@ const handleAdd = () => {
     dialogVisible.value = true
 }
 
+const getCardKeyLink = () => {
+    if (!project.value?.template_id) return ''
+    return `${import.meta.env.VITE_BASE_URL}/api/templates/preview/${project.value.template_id}/${projectId}`
+}
+
 const handleCopyUrl = () => {
-    if (project.value?.url) {
-        copyToClipboard(project.value.url)
-        ElMessage.success('项目链接已复制到剪贴板')
+    const link = getCardKeyLink()
+    if (link) {
+        copyToClipboard(link)
+        ElMessage.success('卡密链接已复制到剪贴板')
     } else {
-        ElMessage.warning('未找到项目链接')
+        ElMessage.warning('当前项目未绑定模板，无法生成卡密链接')
     }
 }
 
@@ -386,7 +392,7 @@ onMounted(() => {
                             type="success"
                             @click="handleCopyUrl"
                         >
-                            验证地址
+                            复制卡密链接
                         </el-button>
                         <el-button
                             v-if="userStore.hasPermission('cardkey:add')"
