@@ -67,9 +67,8 @@ const handleRegister = async () => {
             registerForm.password,
         )
         if (success) {
-            ElMessage.success('注册成功，请登录')
-            isLogin.value = true
-            loginForm.email = registerForm.email
+            ElMessage.success('注册成功')
+            router.push('/dashboard')
         } else {
             ElMessage.error('注册失败')
         }
