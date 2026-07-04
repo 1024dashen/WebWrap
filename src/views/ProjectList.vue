@@ -210,10 +210,9 @@ onMounted(() => {
                                 @click.stop
                                 class="cardkey-link"
                             >
-                                查看卡密页
+                                查看
                             </el-link>
                             <el-button
-                                size="small"
                                 type="success"
                                 link
                                 @click.stop="handleCopyLink(row, $event)"
