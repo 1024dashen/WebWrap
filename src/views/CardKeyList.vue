@@ -399,7 +399,7 @@ onMounted(() => {
             </template>
 
             <el-table :data="filteredCardKeys" style="width: 100%">
-                <el-table-column prop="id" label="ID" width="50" />
+                <el-table-column prop="id" label="ID" width="60" />
                 <el-table-column prop="key" label="卡密" min-width="100">
                     <template #default="{ row }">
                         <code

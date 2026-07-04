@@ -242,7 +242,7 @@ onMounted(() => {
                     </template>
                 </el-table-column>
                 <el-table-column
-                    prop="createdAt"
+                    prop="created_at"
                     label="创建日期"
                     width="120"
                 />
