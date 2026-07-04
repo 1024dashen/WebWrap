@@ -235,7 +235,6 @@ onMounted(() => {
                     @size-change="handleSizeChange"
                 />
             </div>
-
         </el-card>
 
         <!-- Dialog -->
