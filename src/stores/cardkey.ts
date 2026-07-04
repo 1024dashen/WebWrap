@@ -5,6 +5,7 @@ import api from '../utils/api'
 
 export const useCardKeyStore = defineStore('cardkey', () => {
     const cardKeys = ref<CardKey[]>([])
+    const total = ref(0)
 
     const fetchCardKeys = async () => {
         try {
@@ -15,10 +16,17 @@ export const useCardKeyStore = defineStore('cardkey', () => {
         }
     }
 
-    const fetchCardKeysByProjectId = async (projectId: string) => {
+    const fetchCardKeysByProjectId = async (
+        projectId: string,
+        page = 1,
+        pageSize = 10,
+    ) => {
         try {
-            const response = await api.get(`/cardkeys/project/${projectId}`)
+            const response = await api.get(`/cardkeys/project/${projectId}`, {
+                params: { page, pageSize },
+            })
             cardKeys.value = response.data.cardKeys
+            total.value = response.data.total
         } catch (error) {
             console.error('Failed to fetch card keys:', error)
         }
@@ -89,6 +97,7 @@ export const useCardKeyStore = defineStore('cardkey', () => {
 
     return {
         cardKeys,
+        total,
         fetchCardKeys,
         fetchCardKeysByProjectId,
         addCardKey,

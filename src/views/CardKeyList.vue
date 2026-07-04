@@ -21,6 +21,8 @@ const searchQuery = ref('')
 const filterStatus = ref('')
 const filterType = ref('')
 const dialogVisible = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const form = reactive({
     key: '',
@@ -34,6 +36,25 @@ const form = reactive({
 })
 
 const editingCardKey = ref<CardKey | null>(null)
+
+const loadCardKeys = () => {
+    cardKeyStore.fetchCardKeysByProjectId(
+        projectId,
+        currentPage.value,
+        pageSize.value,
+    )
+}
+
+const handlePageChange = (page: number) => {
+    currentPage.value = page
+    loadCardKeys()
+}
+
+const handleSizeChange = (size: number) => {
+    pageSize.value = size
+    currentPage.value = 1
+    loadCardKeys()
+}
 
 const typeDurationMap: Record<CardKey['type'], number> = {
     hourly: 3600,
@@ -151,7 +172,7 @@ const handleDelete = (row: CardKey) => {
         .then(async () => {
             try {
                 await cardKeyStore.deleteCardKey(row.id)
-                await cardKeyStore.fetchCardKeysByProjectId(projectId)
+                await loadCardKeys()
                 ElMessage.success('删除成功')
             } catch (error) {
                 ElMessage.error('删除失败')
@@ -169,7 +190,7 @@ const handleDisable = (row: CardKey) => {
         .then(async () => {
             try {
                 await cardKeyStore.updateCardKey(row.id, { status: 'disabled' })
-                await cardKeyStore.fetchCardKeysByProjectId(projectId)
+                await loadCardKeys()
                 ElMessage.success('已禁用')
             } catch (error) {
                 ElMessage.error('操作失败')
@@ -187,7 +208,7 @@ const handleRestore = (row: CardKey) => {
         .then(async () => {
             try {
                 await cardKeyStore.updateCardKey(row.id, { status: 'unused' })
-                await cardKeyStore.fetchCardKeysByProjectId(projectId)
+                await loadCardKeys()
                 ElMessage.success('已恢复')
             } catch (error) {
                 ElMessage.error('操作失败')
@@ -213,7 +234,7 @@ const handleUnbind = (row: CardKey) => {
                     deviceId: '',
                     usedBy: '',
                 })
-                await cardKeyStore.fetchCardKeysByProjectId(projectId)
+                await loadCardKeys()
                 ElMessage.success('解绑成功')
             } catch (error) {
                 ElMessage.error('操作失败')
@@ -240,7 +261,7 @@ const handleSubmit = async () => {
             })
             ElMessage.success('更新成功')
             dialogVisible.value = false
-            await cardKeyStore.fetchCardKeysByProjectId(projectId)
+            await loadCardKeys()
         } catch (error) {
             ElMessage.error('操作失败')
         }
@@ -275,7 +296,7 @@ const handleSubmit = async () => {
             ElMessage.success(`已生成 ${count} 张卡密`)
         }
         dialogVisible.value = false
-        await cardKeyStore.fetchCardKeysByProjectId(projectId)
+        await loadCardKeys()
     } catch (error) {
         ElMessage.error('操作失败')
     }
@@ -292,7 +313,7 @@ const handleCopyKey = (key: string) => {
 
 onMounted(() => {
     projectStore.fetchProjects()
-    cardKeyStore.fetchCardKeysByProjectId(projectId)
+    loadCardKeys()
 })
 </script>
 
@@ -361,20 +382,19 @@ onMounted(() => {
             </template>
 
             <el-table :data="filteredCardKeys" style="width: 100%">
-                <el-table-column prop="id" label="ID" width="60" />
-                <el-table-column prop="key" label="卡密" min-width="200">
+                <el-table-column prop="id" label="ID" width="50" />
+                <el-table-column prop="key" label="卡密" min-width="100">
                     <template #default="{ row }">
-                        <div class="key-cell">
-                            <code class="card-key">{{ row.key }}</code>
-                            <el-button
-                                size="small"
-                                type="primary"
-                                link
-                                @click="handleCopyKey(row.key)"
-                            >
-                                复制
-                            </el-button>
-                        </div>
+                        <code
+                            class="card-key"
+                            :class="
+                                row.status === 'unused'
+                                    ? 'key-usable'
+                                    : 'key-disabled'
+                            "
+                            @click="handleCopyKey(row.key)"
+                            >{{ row.key }}</code
+                        >
                     </template>
                 </el-table-column>
                 <el-table-column prop="type" label="类型" width="100">
@@ -389,12 +409,7 @@ onMounted(() => {
                         }}</el-tag>
                     </template>
                 </el-table-column>
-                <el-table-column prop="usedBy" label="使用者" width="120">
-                    <template #default="{ row }">
-                        {{ row.usedBy || '-' }}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="deviceId" label="设备ID" min-width="150">
+                <el-table-column prop="deviceId" label="设备ID" min-width="80">
                     <template #default="{ row }">
                         {{ row.deviceId || '-' }}
                     </template>
@@ -402,9 +417,14 @@ onMounted(() => {
                 <el-table-column
                     prop="createdAt"
                     label="创建日期"
-                    width="120"
+                    width="200"
                 />
-                <el-table-column label="操作" width="250" fixed="right">
+                <el-table-column label="使用时间" width="200">
+                    <template #default="{ row }">
+                        {{ row.usedAt || '-' }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="150">
                     <template #default="{ row }">
                         <el-button
                             v-if="userStore.hasPermission('cardkey:edit')"
@@ -463,6 +483,18 @@ onMounted(() => {
                     </template>
                 </el-table-column>
             </el-table>
+
+            <div class="pagination-wrap">
+                <el-pagination
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :page-sizes="[10, 20, 50]"
+                    :total="cardKeyStore.total"
+                    layout="total, sizes, prev, pager, next"
+                    @current-change="handlePageChange"
+                    @size-change="handleSizeChange"
+                />
+            </div>
         </el-card>
 
         <!-- Add/Edit Dialog -->
@@ -573,16 +605,25 @@ onMounted(() => {
     flex-wrap: wrap;
 }
 
-.key-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .card-key {
     font-family: monospace;
     background: #f5f5f5;
     padding: 2px 8px;
     border-radius: 4px;
+    cursor: pointer;
+}
+
+.key-usable {
+    color: #409eff;
+}
+
+.key-disabled {
+    color: #f56c6c;
+}
+
+.pagination-wrap {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
 }
 </style>

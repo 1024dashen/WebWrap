@@ -16,6 +16,8 @@ const searchQuery = ref('')
 const dialogVisible = ref(false)
 const dialogTitle = ref('新增项目')
 const editingProject = ref<Project | null>(null)
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const form = reactive({
     name: '',
@@ -23,6 +25,21 @@ const form = reactive({
     status: 'active' as 'active' | 'archived',
     template_id: null as number | null,
 })
+
+const loadProjects = () => {
+    projectStore.fetchProjects(currentPage.value, pageSize.value)
+}
+
+const handlePageChange = (page: number) => {
+    currentPage.value = page
+    loadProjects()
+}
+
+const handleSizeChange = (size: number) => {
+    pageSize.value = size
+    currentPage.value = 1
+    loadProjects()
+}
 
 const filteredProjects = computed(() => {
     if (!searchQuery.value) return projectStore.projects
@@ -70,6 +87,7 @@ const handleDelete = (row: Project, event: Event) => {
             try {
                 await projectStore.deleteProject(row.id)
                 ElMessage.success('删除成功')
+                loadProjects()
             } catch (error) {
                 ElMessage.error('删除失败')
             }
@@ -102,6 +120,7 @@ const handleSubmit = async () => {
             ElMessage.success('添加成功')
         }
         dialogVisible.value = false
+        loadProjects()
     } catch (error) {
         ElMessage.error('操作失败')
     }
@@ -112,7 +131,7 @@ const handleEnterProject = (project: Project) => {
 }
 
 onMounted(() => {
-    projectStore.fetchProjects()
+    loadProjects()
     templateStore.fetchTemplates()
 })
 </script>
@@ -205,6 +224,18 @@ onMounted(() => {
                 </el-table-column>
             </el-table>
 
+            <div class="pagination-wrap">
+                <el-pagination
+                    v-model:current-page="currentPage"
+                    v-model:page-size="pageSize"
+                    :page-sizes="[10, 20, 50]"
+                    :total="projectStore.total"
+                    layout="total, sizes, prev, pager, next"
+                    @current-change="handlePageChange"
+                    @size-change="handleSizeChange"
+                />
+            </div>
+
             <el-empty
                 v-if="filteredProjects.length === 0"
                 description="暂无项目"
@@ -283,5 +314,11 @@ onMounted(() => {
 .url-text {
     font-size: 13px;
     color: #666;
+}
+
+.pagination-wrap {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
 }
 </style>

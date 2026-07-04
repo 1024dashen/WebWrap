@@ -49,6 +49,7 @@ export interface CardKey {
     deviceId?: string
     expireAt?: string
     usedBy?: string
+    usedAt?: string
     createdAt: string
 }
 

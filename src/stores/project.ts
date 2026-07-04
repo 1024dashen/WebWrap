@@ -5,11 +5,15 @@ import api from '../utils/api'
 
 export const useProjectStore = defineStore('project', () => {
     const projects = ref<Project[]>([])
+    const total = ref(0)
 
-    const fetchProjects = async () => {
+    const fetchProjects = async (page = 1, pageSize = 10) => {
         try {
-            const response = await api.get('/projects')
+            const response = await api.get('/projects', {
+                params: { page, pageSize },
+            })
             projects.value = response.data.projects
+            total.value = response.data.total
         } catch (error) {
             console.error('Failed to fetch projects:', error)
         }
@@ -20,7 +24,6 @@ export const useProjectStore = defineStore('project', () => {
     ) => {
         try {
             const response = await api.post('/projects', project)
-            await fetchProjects()
             return response.data
         } catch (error) {
             console.error('Failed to add project:', error)
@@ -31,7 +34,6 @@ export const useProjectStore = defineStore('project', () => {
     const updateProject = async (id: string, data: Partial<Project>) => {
         try {
             await api.put(`/projects/${id}`, data)
-            await fetchProjects()
         } catch (error) {
             console.error('Failed to update project:', error)
             throw error
@@ -41,7 +43,6 @@ export const useProjectStore = defineStore('project', () => {
     const deleteProject = async (id: string) => {
         try {
             await api.delete(`/projects/${id}`)
-            await fetchProjects()
         } catch (error) {
             console.error('Failed to delete project:', error)
             throw error
@@ -54,6 +55,7 @@ export const useProjectStore = defineStore('project', () => {
 
     return {
         projects,
+        total,
         fetchProjects,
         addProject,
         updateProject,
