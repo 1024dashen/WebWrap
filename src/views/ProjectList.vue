@@ -244,7 +244,7 @@ onMounted(() => {
                 <el-table-column
                     prop="created_at"
                     label="创建日期"
-                    width="120"
+                    width="180"
                 />
                 <el-table-column label="操作" width="150">
                     <template #default="{ row }">

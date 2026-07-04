@@ -59,7 +59,7 @@ export interface CardKeyTemplate {
     name: string
     htmlContent: string
     fileName: string
-    createdAt: string
+    created_at: string
 }
 
 // Menu types

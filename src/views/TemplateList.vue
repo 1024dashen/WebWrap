@@ -130,7 +130,7 @@ onMounted(() => {
                         <h3 class="template-name">{{ template.name }}</h3>
                         <p class="template-file">{{ template.fileName }}</p>
                         <p class="template-date">
-                            创建于 {{ template.createdAt }}
+                            创建于 {{ template.created_at }}
                         </p>
                         <div class="template-actions">
                             <el-button
