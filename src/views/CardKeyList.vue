@@ -53,6 +53,36 @@ const handleCopySelected = () => {
     ElMessage.success(`已复制 ${selectedRows.value.length} 条卡密到剪贴板`)
 }
 
+const tableRef = ref()
+
+const handleBatchDelete = () => {
+    if (selectedRows.value.length === 0) {
+        ElMessage.warning('请先选择要删除的卡密')
+        return
+    }
+    ElMessageBox.confirm(
+        `确定要删除选中的 ${selectedRows.value.length} 条卡密吗？`,
+        '批量删除',
+        {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+        },
+    )
+        .then(async () => {
+            try {
+                const ids = selectedRows.value.map((r) => String(r.id))
+                await cardKeyStore.batchDeleteCardKeys(ids)
+                tableRef.value?.clearSelection()
+                await loadCardKeys()
+                ElMessage.success(`已删除 ${ids.length} 条卡密`)
+            } catch (error) {
+                ElMessage.error('批量删除失败')
+            }
+        })
+        .catch(() => {})
+}
+
 const loadCardKeys = () => {
     cardKeyStore.fetchCardKeysByProjectId(
         projectId,
@@ -416,6 +446,18 @@ onMounted(() => {
                             }}
                         </el-button>
                         <el-button
+                            v-if="userStore.hasPermission('cardkey:delete')"
+                            :disabled="selectedRows.length === 0"
+                            type="danger"
+                            @click="handleBatchDelete"
+                        >
+                            删除选中{{
+                                selectedRows.length > 0
+                                    ? `(${selectedRows.length})`
+                                    : ''
+                            }}
+                        </el-button>
+                        <el-button
                             v-if="userStore.hasPermission('cardkey:add')"
                             type="primary"
                             @click="handleAdd"
@@ -427,6 +469,7 @@ onMounted(() => {
             </template>
 
             <el-table
+                ref="tableRef"
                 :data="filteredCardKeys"
                 style="width: 100%"
                 row-key="id"

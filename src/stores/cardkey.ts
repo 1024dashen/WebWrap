@@ -60,6 +60,15 @@ export const useCardKeyStore = defineStore('cardkey', () => {
         }
     }
 
+    const batchDeleteCardKeys = async (ids: string[]) => {
+        try {
+            await api.post('/cardkeys/batch-delete', { ids })
+        } catch (error) {
+            console.error('Failed to batch delete card keys:', error)
+            throw error
+        }
+    }
+
     const batchAddCardKeys = async (
         projectId: string,
         type: CardKey['type'],
@@ -103,6 +112,7 @@ export const useCardKeyStore = defineStore('cardkey', () => {
         addCardKey,
         updateCardKey,
         deleteCardKey,
+        batchDeleteCardKeys,
         batchAddCardKeys,
         generateKey,
     }
