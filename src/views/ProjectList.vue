@@ -143,6 +143,11 @@ const handleSubmit = async () => {
         return
     }
 
+    // 若 URL 不以 http:// 或 https:// 开头，自动补全 http://
+    if (!/^https?:\/\//i.test(form.url)) {
+        form.url = 'http://' + form.url
+    }
+
     try {
         if (editingProject.value) {
             await projectStore.updateProject(editingProject.value.id, {
