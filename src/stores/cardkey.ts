@@ -69,6 +69,15 @@ export const useCardKeyStore = defineStore('cardkey', () => {
         }
     }
 
+    const batchUpdateRemark = async (ids: string[], remark: string) => {
+        try {
+            await api.post('/cardkeys/batch-update-remark', { ids, remark })
+        } catch (error) {
+            console.error('Failed to batch update remark:', error)
+            throw error
+        }
+    }
+
     const batchAddCardKeys = async (
         projectId: string,
         type: CardKey['type'],
@@ -113,6 +122,7 @@ export const useCardKeyStore = defineStore('cardkey', () => {
         updateCardKey,
         deleteCardKey,
         batchDeleteCardKeys,
+        batchUpdateRemark,
         batchAddCardKeys,
         generateKey,
     }

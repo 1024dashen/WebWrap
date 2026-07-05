@@ -83,6 +83,34 @@ const handleBatchDelete = () => {
         .catch(() => {})
 }
 
+const handleBatchRemark = () => {
+    if (selectedRows.value.length === 0) {
+        ElMessage.warning('请先选择要修改的卡密')
+        return
+    }
+    ElMessageBox.prompt(
+        `将为选中的 ${selectedRows.value.length} 条卡密设置统一备注`,
+        '批量修改备注',
+        {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            inputPlaceholder: '请输入备注内容',
+        },
+    )
+        .then(async ({ value }) => {
+            try {
+                const ids = selectedRows.value.map((r) => String(r.id))
+                await cardKeyStore.batchUpdateRemark(ids, value ?? '')
+                tableRef.value?.clearSelection()
+                await loadCardKeys()
+                ElMessage.success(`已修改 ${ids.length} 条卡密备注`)
+            } catch (error) {
+                ElMessage.error('批量修改备注失败')
+            }
+        })
+        .catch(() => {})
+}
+
 const loadCardKeys = () => {
     cardKeyStore.fetchCardKeysByProjectId(
         projectId,
@@ -402,7 +430,7 @@ onMounted(() => {
                             style="width: 200px"
                             clearable
                         />
-                        <el-select
+                        <!-- <el-select
                             v-model="filterStatus"
                             placeholder="状态筛选"
                             clearable
@@ -427,7 +455,7 @@ onMounted(() => {
                                 :label="opt.label"
                                 :value="opt.value"
                             />
-                        </el-select>
+                        </el-select> -->
                         <el-button
                             v-if="userStore.hasPermission('cardkey:add')"
                             type="success"
@@ -452,6 +480,17 @@ onMounted(() => {
                             @click="handleBatchDelete"
                         >
                             删除选中{{
+                                selectedRows.length > 0
+                                    ? `(${selectedRows.length})`
+                                    : ''
+                            }}
+                        </el-button>
+                        <el-button
+                            v-if="userStore.hasPermission('cardkey:edit')"
+                            :disabled="selectedRows.length === 0"
+                            @click="handleBatchRemark"
+                        >
+                            修改备注{{
                                 selectedRows.length > 0
                                     ? `(${selectedRows.length})`
                                     : ''
@@ -510,6 +549,11 @@ onMounted(() => {
                 <el-table-column prop="deviceId" label="设备ID" min-width="80">
                     <template #default="{ row }">
                         {{ row.deviceId || '-' }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="remark" label="备注" min-width="100">
+                    <template #default="{ row }">
+                        {{ row.remark || '-' }}
                     </template>
                 </el-table-column>
                 <el-table-column prop="createdAt" label="创建日期" width="200">
