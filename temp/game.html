@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>本地中转页</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+    .box {
+      width: min(560px, calc(100vw - 32px));
+      background: #fff;
+      border: 1px solid #dbe3ef;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 12px;
+    }
+    p {
+      margin: 8px 0;
+      line-height: 1.5;
+      font-size: 14px;
+      color: #4b5563;
+      word-break: break-all;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .hint {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    button {
+      margin-top: 16px;
+      border: 0;
+      background: #2563eb;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>本地中转页</h1>
+    <p>准备跳转</p>
+    <p class="hint">打开后会自动提交；如果浏览器拦截自动跳转，可以点下面按钮手动提交。</p>
+    <button id="goBtn" type="button">立即提交</button>
+  </div>
+
+  <form id="relayForm" method="POST" action="http://1.14.140.137:8822/auth.php">
+    <input type="hidden" name="device_hash" value="3440189a">
+    <input type="hidden" name="card_code" value="0SII1V28FCE6EAUL">
+  </form>
+
+  <script>
+    const form = document.getElementById("relayForm");
+    const submit = () => form.submit();
+
+    document.getElementById("goBtn").addEventListener("click", submit);
+    window.addEventListener("load", () => setTimeout(submit, 700));
+  </script>
+</body>
+</html>
