@@ -53,6 +53,23 @@ const handleCopySelected = () => {
     ElMessage.success(`已复制 ${selectedRows.value.length} 条卡密到剪贴板`)
 }
 
+const handleExportCsv = () => {
+    if (selectedRows.value.length === 0) {
+        ElMessage.warning('请先选择要导出的卡密')
+        return
+    }
+    const csvContent =
+        '\uFEFF卡密\n' + selectedRows.value.map((r) => r.key).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `cardkeys_${project.value?.name || projectId}_${Date.now()}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success(`已导出 ${selectedRows.value.length} 条卡密`)
+}
+
 const tableRef = ref()
 
 const handleBatchDelete = () => {
@@ -494,6 +511,13 @@ onMounted(() => {
                             @click="handleBatchRemark"
                         >
                             修改备注({{ selectedRows.length }})
+                        </el-button>
+                        <el-button
+                            v-if="selectedRows.length > 0"
+                            type="warning"
+                            @click="handleExportCsv"
+                        >
+                            导出CSV({{ selectedRows.length }})
                         </el-button>
                         <el-button
                             v-if="
