@@ -37,6 +37,21 @@ const form = reactive({
 })
 
 const editingCardKey = ref<CardKey | null>(null)
+const selectedRows = ref<CardKey[]>([])
+
+const handleSelectionChange = (rows: CardKey[]) => {
+    selectedRows.value = rows
+}
+
+const handleCopySelected = () => {
+    if (selectedRows.value.length === 0) {
+        ElMessage.warning('请先选择要复制的卡密')
+        return
+    }
+    const keys = selectedRows.value.map((r) => r.key).join('\n')
+    copyToClipboard(keys)
+    ElMessage.success(`已复制 ${selectedRows.value.length} 条卡密到剪贴板`)
+}
 
 const loadCardKeys = () => {
     cardKeyStore.fetchCardKeysByProjectId(
@@ -391,6 +406,16 @@ onMounted(() => {
                             复制卡密链接
                         </el-button>
                         <el-button
+                            :disabled="selectedRows.length === 0"
+                            @click="handleCopySelected"
+                        >
+                            复制选中{{
+                                selectedRows.length > 0
+                                    ? `(${selectedRows.length})`
+                                    : ''
+                            }}
+                        </el-button>
+                        <el-button
                             v-if="userStore.hasPermission('cardkey:add')"
                             type="primary"
                             @click="handleAdd"
@@ -401,9 +426,14 @@ onMounted(() => {
                 </div>
             </template>
 
-            <el-table :data="filteredCardKeys" style="width: 100%">
+            <el-table
+                :data="filteredCardKeys"
+                style="width: 100%"
+                @selection-change="handleSelectionChange"
+            >
+                <el-table-column type="selection" width="45" />
                 <el-table-column prop="id" label="ID" width="60" />
-                <el-table-column prop="key" label="卡密" min-width="100">
+                <el-table-column prop="key" label="卡密" min-width="120">
                     <template #default="{ row }">
                         <code
                             class="card-key"
