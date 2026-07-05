@@ -8,6 +8,7 @@ import { useTemplateStore } from '../stores/template'
 import type { Project } from '../types'
 import { copyToClipboard } from '../utils/clipboard'
 import { formatDate } from '../utils/date'
+import api from '../utils/api'
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -24,9 +25,42 @@ const pageSize = ref(10)
 const form = reactive({
     name: '',
     url: '',
+    type: 'url' as 'url' | 'html',
     status: 'active' as 'active' | 'disabled',
     template_id: null as number | null,
 })
+
+const uploading = ref(false)
+const htmlFileInput = ref<HTMLInputElement | null>(null)
+
+const handleUploadHtml = async (event: Event) => {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.html')) {
+        ElMessage.warning('仅支持上传 .html 文件')
+        input.value = ''
+        return
+    }
+
+    uploading.value = true
+    try {
+        const formData = new FormData()
+        formData.append('file', file)
+        const response = await api.post('/projects/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        form.url = response.data.url
+        form.type = 'html'
+        ElMessage.success('HTML 文件上传成功')
+    } catch (error: any) {
+        ElMessage.error(error?.response?.data?.error || '上传失败')
+    } finally {
+        uploading.value = false
+        input.value = ''
+    }
+}
 
 const loadProjects = () => {
     projectStore.fetchProjects(currentPage.value, pageSize.value)
@@ -56,6 +90,7 @@ const filteredProjects = computed(() => {
 const resetForm = () => {
     form.name = ''
     form.url = ''
+    form.type = 'url'
     form.status = 'active'
     form.template_id = null
     editingProject.value = null
@@ -73,6 +108,7 @@ const handleEdit = (row: Project, event: Event) => {
     dialogTitle.value = '编辑项目'
     form.name = row.name
     form.url = row.url
+    form.type = (row as any).type || 'url'
     form.status = row.status
     form.template_id = (row as any).template_id || null
     dialogVisible.value = true
@@ -112,6 +148,7 @@ const handleSubmit = async () => {
             await projectStore.updateProject(editingProject.value.id, {
                 name: form.name,
                 url: form.url,
+                type: form.type,
                 status: form.status,
                 template_id: form.template_id,
             })
@@ -120,6 +157,7 @@ const handleSubmit = async () => {
             await projectStore.addProject({
                 name: form.name,
                 url: form.url,
+                type: form.type,
                 status: form.status,
                 template_id: form.template_id,
             })
@@ -144,6 +182,17 @@ const handleCopyLink = (project: Project, event: Event) => {
     copyToClipboard(link)
         .then(() => {
             ElMessage.success('链接已复制到剪贴板')
+        })
+        .catch(() => {
+            ElMessage.error('复制失败')
+        })
+}
+
+const handleCopyProjectUrl = (project: Project, event: Event) => {
+    event.stopPropagation()
+    copyToClipboard(project.url)
+        .then(() => {
+            ElMessage.success('项目URL已复制到剪贴板')
         })
         .catch(() => {
             ElMessage.error('复制失败')
@@ -198,10 +247,25 @@ onMounted(() => {
                 </el-table-column>
                 <el-table-column prop="url" label="项目URL" min-width="200">
                     <template #default="{ row }">
-                        <span class="url-text">{{ row.url }}</span>
+                        <span
+                            class="url-text url-copy"
+                            @click.stop="handleCopyProjectUrl(row, $event)"
+                            :title="'点击复制: ' + row.url"
+                            >{{ row.url }}</span
+                        >
                     </template>
                 </el-table-column>
-                <el-table-column label="卡密链接" min-width="200">
+                <el-table-column label="项目类型" width="100">
+                    <template #default="{ row }">
+                        <el-tag
+                            :type="row.type === 'html' ? 'success' : 'info'"
+                            size="small"
+                        >
+                            {{ row.type === 'html' ? 'HTML' : 'URL' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="卡密链接" min-width="90">
                     <template #default="{ row }">
                         <template v-if="getCardKeyLink(row)">
                             <el-link
@@ -299,6 +363,23 @@ onMounted(() => {
                     <el-input
                         v-model="form.url"
                         placeholder="请输入项目URL地址"
+                        :disabled="form.type === 'html'"
+                    >
+                        <template #append>
+                            <el-button
+                                :loading="uploading"
+                                @click="htmlFileInput?.click()"
+                            >
+                                上传HTML
+                            </el-button>
+                        </template>
+                    </el-input>
+                    <input
+                        ref="htmlFileInput"
+                        type="file"
+                        accept=".html"
+                        style="display: none"
+                        @change="handleUploadHtml"
                     />
                 </el-form-item>
                 <el-form-item label="卡密模板">
@@ -358,6 +439,15 @@ onMounted(() => {
 .url-text {
     font-size: 13px;
     color: #666;
+}
+
+.url-copy {
+    cursor: pointer;
+}
+
+.url-copy:hover {
+    color: #409eff;
+    text-decoration: underline;
 }
 
 .cardkey-link {

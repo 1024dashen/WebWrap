@@ -30,6 +30,7 @@ export interface Project {
     id: string
     name: string
     url: string
+    type: 'url' | 'html'
     status: 'active' | 'disabled'
     template_id?: number | null
     createdAt: string
