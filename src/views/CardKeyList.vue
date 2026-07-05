@@ -429,9 +429,14 @@ onMounted(() => {
             <el-table
                 :data="filteredCardKeys"
                 style="width: 100%"
+                row-key="id"
                 @selection-change="handleSelectionChange"
             >
-                <el-table-column type="selection" width="45" />
+                <el-table-column
+                    type="selection"
+                    width="45"
+                    reserve-selection
+                />
                 <el-table-column prop="id" label="ID" width="60" />
                 <el-table-column prop="key" label="卡密" min-width="120">
                     <template #default="{ row }">
