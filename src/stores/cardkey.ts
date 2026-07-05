@@ -20,10 +20,11 @@ export const useCardKeyStore = defineStore('cardkey', () => {
         projectId: string,
         page = 1,
         pageSize = 10,
+        search = '',
     ) => {
         try {
             const response = await api.get(`/cardkeys/project/${projectId}`, {
-                params: { page, pageSize },
+                params: { page, pageSize, search },
             })
             cardKeys.value = response.data.cardKeys
             total.value = response.data.total

@@ -116,6 +116,7 @@ const loadCardKeys = () => {
         projectId,
         currentPage.value,
         pageSize.value,
+        searchQuery.value,
     )
 }
 
@@ -166,10 +167,6 @@ const statusOptions = [
 
 const filteredCardKeys = computed(() => {
     let result = cardKeyStore.cardKeys
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase()
-        result = result.filter((k) => k.key.toLowerCase().includes(query))
-    }
     if (filterStatus.value) {
         result = result.filter((k) => k.status === filterStatus.value)
     }
@@ -177,6 +174,16 @@ const filteredCardKeys = computed(() => {
         result = result.filter((k) => k.type === filterType.value)
     }
     return result
+})
+
+// 搜索输入防抖：输入停止 400ms 后触发请求
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+        currentPage.value = 1
+        loadCardKeys()
+    }, 400)
 })
 
 const getTypeLabel = (type: string) => {
@@ -426,7 +433,7 @@ onMounted(() => {
                     <div class="header-actions">
                         <el-input
                             v-model="searchQuery"
-                            placeholder="搜索卡密..."
+                            placeholder="搜索卡密/备注/设备ID..."
                             style="width: 200px"
                             clearable
                         />
