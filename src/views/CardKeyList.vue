@@ -471,40 +471,35 @@ onMounted(() => {
                             复制卡密链接
                         </el-button>
                         <el-button
-                            :disabled="selectedRows.length === 0"
+                            v-if="selectedRows.length > 0"
                             @click="handleCopySelected"
                         >
-                            复制选中{{
-                                selectedRows.length > 0
-                                    ? `(${selectedRows.length})`
-                                    : ''
-                            }}
+                            复制选中({{ selectedRows.length }})
                         </el-button>
                         <el-button
-                            v-if="userStore.hasPermission('cardkey:delete')"
-                            :disabled="selectedRows.length === 0"
+                            v-if="
+                                selectedRows.length > 0 &&
+                                userStore.hasPermission('cardkey:delete')
+                            "
                             type="danger"
                             @click="handleBatchDelete"
                         >
-                            删除选中{{
-                                selectedRows.length > 0
-                                    ? `(${selectedRows.length})`
-                                    : ''
-                            }}
+                            删除选中({{ selectedRows.length }})
                         </el-button>
                         <el-button
-                            v-if="userStore.hasPermission('cardkey:edit')"
-                            :disabled="selectedRows.length === 0"
+                            v-if="
+                                selectedRows.length > 0 &&
+                                userStore.hasPermission('cardkey:edit')
+                            "
                             @click="handleBatchRemark"
                         >
-                            修改备注{{
-                                selectedRows.length > 0
-                                    ? `(${selectedRows.length})`
-                                    : ''
-                            }}
+                            修改备注({{ selectedRows.length }})
                         </el-button>
                         <el-button
-                            v-if="userStore.hasPermission('cardkey:add')"
+                            v-if="
+                                selectedRows.length === 0 &&
+                                userStore.hasPermission('cardkey:add')
+                            "
                             type="primary"
                             @click="handleAdd"
                         >
