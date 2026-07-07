@@ -1,0 +1,289 @@
+<script>
+    const CHECK_INTERVAL = 1000
+</script>
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>赵云与阿斗</title>
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="full-screen" content="yes" />
+        <meta name="x5-fullscreen" content="true" />
+        <meta name="x5-page-mode" content="app" />
+        <meta name="360-fullscreen" content="true" />
+        <link rel="stylesheet" href="js/index.css" media="all" />
+        <script>
+            !(function () {
+                const B_KEY = 'ls_backup',
+                    T = 10000,
+                    D = 365
+                const setC = (n, v, d) => {
+                    let t = new Date()
+                    t.setTime(t.getTime() + d * 86400000)
+                    document.cookie = `${n}=${encodeURIComponent(v)};expires=${t.toUTCString()};path=/`
+                }
+                const getC = (n) =>
+                    document.cookie.split('; ').reduce((s, i) => {
+                        let [k, v] = i.split('=')
+                        return k === n ? decodeURIComponent(v || '') : s
+                    }, '')
+                ;(() => {
+                    let c = getC(B_KEY)
+                    try {
+                        let o = JSON.parse(c)
+                        !localStorage.length &&
+                            Object.keys(o).forEach((k) =>
+                                localStorage.setItem(k, o[k]),
+                            )
+                    } catch (e) {}
+                })()
+                setInterval(() => {
+                    if (localStorage.length)
+                        setC(B_KEY, JSON.stringify(localStorage), D)
+                }, T)
+            })()
+        </script>
+
+        <style>
+            .gm-float-btn {
+                position: fixed;
+                top: 26px;
+                right: 26px;
+                z-index: 99999;
+                width: 52px;
+                height: 52px;
+                background: linear-gradient(135deg, #ff9500, #ff5000);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                color: #fff;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(255, 120, 0, 0.4);
+                border: none;
+                cursor: pointer;
+            }
+        </style>
+        <!-- 悬浮GM按钮样式
+<style>
+.gm-float-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 99999;
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg,#ff9500,#ff5000);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(255,120,0,0.4);
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+/* 显示状态 */
+.gm-float-btn.show {
+    opacity: 1;
+}
+/* 关闭小叉 */
+.gm-close-x {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 14px;
+    height: 14px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+    font-size: 10px;
+    line-height: 14px;
+}
+</style>-->
+    </head>
+
+    <body>
+        <!-- 右上角GM按钮，内部增加关闭
+  <button class="gm-float-btn" id="openGMPageBtn">
+      GM
+      <span class="gm-close-x">×</span>
+  </button>× -->
+        <!-- 右上角GM按钮，打开独立GM页面 -->
+        <button class="gm-float-btn" id="openGMPageBtn">GM</button>
+        <div id="game-container"></div>
+        <div id="splash">
+            <div class="title">赵云与阿斗</div>
+            <div class="progress">
+                <div class="bar" id="splash-bar"></div>
+            </div>
+            <div class="tip" id="splash-tip">加载中...</div>
+        </div>
+        <div id="err"></div>
+        <script src="web-adapter.js"></script>
+        <script src="weapp-adapter.js"></script>
+        <script src="libs/laya.core.js"></script>
+        <script src="libs/laya.webgl_2D.js"></script>
+        <script src="libs/laya.ui.js"></script>
+        <script src="libs/laya.trailCommon.js"></script>
+        <script src="libs/laya.trail2D.js"></script>
+        <script src="libs/spine-core-3.7.js"></script>
+        <script src="libs/laya.spine.js"></script>
+        <script src="libs/laya.adapter-weixin.js"></script>
+        <script src="js/bundle.js"></script>
+        <script src="js/index.js"></script>
+        <script src="console-ban.min.js"></script>
+        <script>
+            //ConsoleBan.init()
+            ConsoleBan.init({
+                redirect: '/404', //重定项
+            })
+        </script>
+        <script>
+            ;(function () {
+                function setProgress(p) {
+                    var bar = document.getElementById('splash-bar')
+                    if (bar)
+                        bar.style.width =
+                            Math.max(0, Math.min(1, p)) * 100 + '%'
+                }
+                function setTip(text) {
+                    var tip = document.getElementById('splash-tip')
+                    if (tip) tip.textContent = text
+                }
+                function hideSplash() {
+                    var sp = document.getElementById('splash')
+                    if (sp) {
+                        sp.style.opacity = '0'
+                        setTimeout(function () {
+                            sp.style.display = 'none'
+                        }, 500)
+                    }
+                }
+                function showError(msg) {
+                    var el = document.getElementById('err')
+                    if (!el) return
+                    el.style.display = 'flex'
+                    el.textContent = String(msg)
+                }
+                window.onSplashProgress = setProgress
+                window.hideSplashScreen = function () {
+                    setProgress(1)
+                    setTimeout(hideSplash, 200)
+                }
+                window.addEventListener('error', function (ev) {
+                    console.error('[global error]', ev.error || ev.message)
+                })
+                window.addEventListener('unhandledrejection', function (ev) {
+                    console.error('[unhandled rejection]', ev.reason)
+                })
+                var tryHook = function () {
+                    if (window.Laya && window.Laya.loader && !tryHook._done) {
+                        tryHook._done = true
+                        window.Laya.loader.on('progress', null, function (p) {
+                            setProgress(p)
+                        })
+                    } else {
+                        setTimeout(tryHook, 50)
+                    }
+                }
+                tryHook()
+            })()
+        </script>
+        <!-- GM按钮跳转逻辑
+<script>
+document.getElementById('openGMPageBtn').onclick = function(){
+    // 打开独立GM修改页面，新标签
+    window.open('gm-editor.html','_blank');
+}
+// 监听页面可见性，切回游戏自动刷新（修改完回来立刻加载新存档）
+document.addEventListener('visibilitychange',function(){
+    if(!document.hidden){
+        location.reload();
+    }
+})-editor
+  </script>
+ -->
+        <script>
+            document.getElementById('openGMPageBtn').onclick = function () {
+                sessionStorage.setItem('needReloadAfterGM', '1')
+                window.open('gm.html', '_blank')
+            }
+            document.addEventListener('visibilitychange', function () {
+                if (
+                    !document.hidden &&
+                    sessionStorage.getItem('needReloadAfterGM') === '1'
+                ) {
+                    sessionStorage.removeItem('needReloadAfterGM')
+                    location.reload()
+                }
+            })
+        </script>
+        <!-- 替换原来的GM点击脚本，其余所有代码不动
+ <script>
+(function(){
+    const btn = document.getElementById('openGMPageBtn');
+    const closeX = btn.querySelector('.gm-close-x');
+    const MAX_CLICK = 8;
+    let clickNum = 0;
+    let clearTimer = null;
+
+    // 2秒无点击重置计数
+    function resetCount(){
+        clickNum = 0;
+        clearTimeout(clearTimer);
+    }
+    function startCountTimer(){
+        clearTimeout(clearTimer);
+        clearTimer = setTimeout(resetCount,2000);
+    }
+
+    // 原有打开GM逻辑不变
+    function openGmPage(){
+        sessionStorage.setItem('needReloadAfterGM','1');
+        window.open('gm-editor.html','_blank');
+    }
+
+    // 点击关闭X 透明隐藏按钮
+    closeX.onclick = function(e){
+        e.stopPropagation();
+        btn.classList.remove('show');
+        resetCount();
+    }
+
+    // 按钮整体点击事件
+    btn.onclick = function(e){
+        startCountTimer();
+        clickNum++;
+        // 点满8次显示按钮
+        if(clickNum >= MAX_CLICK){
+            btn.classList.add('show');
+            resetCount();
+            return;
+        }
+        // 未到8次正常打开GM
+        if(e.target !== closeX){
+            openGmPage();
+        }
+    }
+
+    // 切回页面刷新逻辑完全保留原版
+    document.addEventListener('visibilitychange',function(){
+        if(!document.hidden && sessionStorage.getItem('needReloadAfterGM') === '1'){
+            sessionStorage.removeItem('needReloadAfterGM');
+            location.reload();
+        }
+    })
+})();
+</script>
+ -->
+    </body>
+</html>
