@@ -134,6 +134,7 @@ const loadCardKeys = () => {
         currentPage.value,
         pageSize.value,
         searchQuery.value,
+        filterStatus.value,
     )
 }
 
@@ -184,9 +185,6 @@ const statusOptions = [
 
 const filteredCardKeys = computed(() => {
     let result = cardKeyStore.cardKeys
-    if (filterStatus.value) {
-        result = result.filter((k) => k.status === filterStatus.value)
-    }
     if (filterType.value) {
         result = result.filter((k) => k.type === filterType.value)
     }
@@ -201,6 +199,12 @@ watch(searchQuery, () => {
         currentPage.value = 1
         loadCardKeys()
     }, 400)
+})
+
+// 状态筛选变更时立即触发请求
+watch(filterStatus, () => {
+    currentPage.value = 1
+    loadCardKeys()
 })
 
 const getTypeLabel = (type: string) => {
@@ -454,7 +458,7 @@ onMounted(() => {
                             style="width: 200px"
                             clearable
                         />
-                        <!-- <el-select
+                        <el-select
                             v-model="filterStatus"
                             placeholder="状态筛选"
                             clearable
@@ -467,7 +471,7 @@ onMounted(() => {
                                 :value="opt.value"
                             />
                         </el-select>
-                        <el-select
+                        <!-- <el-select
                             v-model="filterType"
                             placeholder="类型筛选"
                             clearable
