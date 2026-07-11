@@ -28,6 +28,7 @@ const form = reactive({
     type: 'url' as 'url' | 'html',
     status: 'active' as 'active' | 'disabled',
     template_id: null as number | null,
+    proxy_url: '',
 })
 
 const uploading = ref(false)
@@ -93,6 +94,7 @@ const resetForm = () => {
     form.type = 'url'
     form.status = 'active'
     form.template_id = null
+    form.proxy_url = ''
     editingProject.value = null
 }
 
@@ -111,6 +113,7 @@ const handleEdit = (row: Project, event: Event) => {
     form.type = (row as any).type || 'url'
     form.status = row.status
     form.template_id = (row as any).template_id || null
+    form.proxy_url = (row as any).proxy_url || ''
     dialogVisible.value = true
 }
 
@@ -156,6 +159,7 @@ const handleSubmit = async () => {
                 type: form.type,
                 status: form.status,
                 template_id: form.template_id,
+                proxy_url: form.proxy_url,
             })
             ElMessage.success('更新成功')
         } else {
@@ -165,6 +169,7 @@ const handleSubmit = async () => {
                 type: form.type,
                 status: form.status,
                 template_id: form.template_id,
+                proxy_url: form.proxy_url,
             })
             ElMessage.success('添加成功')
         }
@@ -386,6 +391,15 @@ onMounted(() => {
                         style="display: none"
                         @change="handleUploadHtml"
                     />
+                </el-form-item>
+                <el-form-item v-if="form.type === 'html'" label="代理地址">
+                    <el-input
+                        v-model="form.proxy_url"
+                        placeholder="选填，如 http://1.14.140.137:8822"
+                    />
+                    <div style="font-size: 12px; color: #999; margin-top: 4px">
+                        填写后，/game/项目ID/ 的资源请求将转发到此地址
+                    </div>
                 </el-form-item>
                 <el-form-item label="卡密模板">
                     <el-select

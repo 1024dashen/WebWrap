@@ -33,6 +33,7 @@ export interface Project {
     type: 'url' | 'html'
     status: 'active' | 'disabled'
     template_id?: number | null
+    proxy_url?: string
     createdAt: string
     cardKeyCount: number
 }
